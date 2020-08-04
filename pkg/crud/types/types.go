@@ -23,13 +23,27 @@ type Store interface {
 	Delete(key PrimaryKey)
 	// Filter returns a filter given an object whose fields are filters
 	Filter(filter Object) Filter
+	// IterateKeys iterates across all the keys in the store
+	// and executes the given function, if the function returns
+	// false then the iteration stops
+	// CONTRACT: while IterateKeys is running no action
+	// can be performed on the store
 	IterateKeys(func(pk PrimaryKey) bool)
 }
 
 // Filter defines the behaviour of the store filter
 type Filter interface {
+	// Update updates the current object given a new one
+	// if the primary keys do not match it will panic
+	Update(o Object)
+	// Read reads current primary key to the given target object
 	Read(target Object)
+	// Valid verifies if the filter is still valid
+	// false is returned when the iterator has finished
+	// or has not found any object matching the given filter
 	Valid() bool
+	// Next moves to the next primary key in the filter
 	Next()
+	// Delete deletes the current object and removes its indexes
 	Delete()
 }
