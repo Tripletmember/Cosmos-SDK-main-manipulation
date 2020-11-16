@@ -1,130 +1,176 @@
 package store
 
 import (
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/iov-one/cosmos-sdk-crud/internal/filter"
-	"github.com/iov-one/cosmos-sdk-crud/pkg/crud/types"
+	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/indexes"
+	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/metadata"
+	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/objects"
+	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
 )
 
-var indexListPrefix = []byte{0x2}
-var indexPrefix = []byte{0x01}
-var objectPrefix = []byte{0x00}
+// DefaultVerifyType asserts that the type is not verified when
+// interacting with the store
+const DefaultVerifyType = false
 
-type objects interface {
-	create(o types.Object)
-	read(key types.PrimaryKey, o types.Object) bool
-	delete(key types.PrimaryKey)
-	update(o types.Object)
-	iterate(do func(pk types.PrimaryKey) bool)
+// ObjectsPrefix defines at which prefix of the kv store
+// we are actually saving the concrete objects
+const ObjectsPrefix = 0x0
+
+// IndexesPrefix defines the prefix of the kv store
+// in which we are storing indexes data
+const IndexesPrefix = 0x1
+
+// MetadataPrefix defines the prefix of the kv store
+// in which we are storing objects metadata
+const MetadataPrefix = 0x2
+
+type OptionFunc func(s *Store)
+
+func VerifyTypes(s *Store) {
+	s.verifyType = true
 }
 
-type indexes interface {
-	create(o types.Object)
-	delete(pk types.PrimaryKey)
-	iterate(sk types.SecondaryKey, do func(pk types.PrimaryKey) bool)
+func DoNotVerifyTypes(s *Store) {
+	s.verifyType = false
 }
 
-// Store defines a crud object store
-// the store creates two sub-stores
-// using prefixing, one is used to store objects
-// the other one is used to store the indexes of
-// the object.
 type Store struct {
-	objects objects
-	indexes indexes
-	raw     sdk.KVStore
+	cdc *codec.Codec
+
+	verifyType bool
+
+	objects  objects.Store
+	indexes  indexes.Store
+	metadata metadata.Store
 }
 
-// NewStore generates a new crud.Store given a context, a store key, the codec and a unique prefix
-// that can be specified as nil if not required, the prefix generally serves the purpose of splitting
-// a store into different stores in case different objects have to coexist in the same store.
-func NewStore(ctx sdk.Context, key sdk.StoreKey, cdc *codec.Codec, uniquePrefix []byte) Store {
-	store := ctx.KVStore(key)
-	if len(uniquePrefix) != 0 {
-		store = prefix.NewStore(store, uniquePrefix)
+func NewStore(cdc *codec.Codec, db sdk.KVStore, pfx []byte, options ...OptionFunc) Store {
+	prefixedStore := prefix.NewStore(db, pfx)
+	s := Store{
+		cdc:        cdc,
+		verifyType: DefaultVerifyType,
+		objects:    objects.NewStore(cdc, prefix.NewStore(prefixedStore, []byte{ObjectsPrefix})),
+		indexes:    indexes.NewStore(cdc, prefix.NewStore(prefixedStore, []byte{IndexesPrefix})),
+		metadata:   metadata.NewStore(cdc, prefix.NewStore(prefixedStore, []byte{MetadataPrefix})),
 	}
-	return Store{
-		indexes: newIndexes(cdc, store),
-		objects: newObjectsStore(cdc, store),
-		raw:     store,
+	for _, opt := range options {
+		opt(&s)
+	}
+	return s
+}
+
+func (s Store) Create(o types.Object) error {
+	err := s.objects.Create(o)
+	if err != nil {
+		return err
+	}
+	// create indexes
+	err = s.indexes.Index(o)
+	if err != nil {
+		err2 := s.objects.Delete(o.PrimaryKey())
+		if err2 != nil {
+			panic(fmt.Errorf("state corruption unable to rollback delete after error %s: %s", err, err2))
+		}
+		return err
+	}
+	// done
+	return nil
+}
+
+func (s Store) Read(primaryKey []byte, o types.Object) error {
+	return s.objects.Read(primaryKey, o)
+}
+
+func (s Store) Update(o types.Object) error {
+	// update indexes
+	err := s.indexes.Delete(o.PrimaryKey())
+	if err != nil {
+		return err
+	}
+	err = s.indexes.Index(o)
+	if err != nil {
+		// state corruption, cannot rollback TODO make rollback possible
+		panic(err)
+	}
+	err = s.objects.Update(o)
+	if err != nil {
+		// state corruption panic
+		panic(err)
+	}
+	return nil
+}
+
+func (s Store) Delete(primaryKey []byte) error {
+	err := s.indexes.Delete(primaryKey)
+	if err != nil {
+		return err
+	}
+	err = s.objects.Delete(primaryKey)
+	if err != nil {
+		// state corruption, cannot rollback. todo make rollback possible
+		panic(err)
+	}
+	return nil
+}
+
+func (s Store) RegisterObject(o types.Object) {
+}
+
+func (s Store) Query(sks []types.SecondaryKey, start, end uint64) (*Cursor, error) {
+	pks, err := s.indexes.Filter(sks, start, end)
+	if err != nil {
+		return nil, err
+	}
+	return newFilter(pks, s), nil
+}
+
+func newFilter(primaryKeys [][]byte, store Store) *Cursor {
+	return &Cursor{
+		keys:     primaryKeys,
+		store:    store,
+		maxKeys:  len(primaryKeys),
+		keyIndex: 0,
 	}
 }
 
-func (s Store) Filter(fltr types.Object) types.Filter {
-	// if the primary key is specified then return that
-	var primaryKeys []types.PrimaryKey
-	pk := fltr.PrimaryKey()
-	// if primary key exists then just use that
-	if pk != nil && len(pk.Key()) != 0 {
-		primaryKeys = append(primaryKeys, pk)
-		return filter.NewFiltered(primaryKeys, s)
+type Cursor struct {
+	maxKeys  int
+	keyIndex int
+	valid    bool
+	keys     [][]byte
+	store    Store
+}
+
+func (c *Cursor) Next() {
+	if c.keyIndex+1 == c.maxKeys {
+		c.valid = false
+		return
 	}
-	primaryKeys = append(primaryKeys, s.getPrimaryKeys(fltr.SecondaryKeys())...)
-	return filter.NewFiltered(primaryKeys, s)
+	c.keyIndex += 1
 }
 
-// Create creates a new object in the object store and writes its indexes
-func (s Store) Create(o types.Object) {
-	primaryKey := o.PrimaryKey()
-	// TODO this in the future needs to be autogenerated to decouple
-	// the need for a primary key for objects that do not need or have it
-	// and rely on indexes for filtering of different objects
-	if len(primaryKey.Key()) == 0 {
-		panic("empty primary key provided")
+func (c *Cursor) Read(o types.Object) error {
+	return c.store.Read(c.currKey(), o)
+}
+
+func (c *Cursor) Delete() error {
+	return c.store.Delete(c.currKey())
+}
+
+func (c *Cursor) Update(o types.Object) error {
+	return c.store.Update(o)
+}
+
+func (c *Cursor) Valid() bool {
+	if len(c.keys) == 0 {
+		return false
 	}
-	// create object
-	s.objects.create(o)
-	// generate indexes
-	s.indexes.create(o)
+	return c.valid
 }
 
-// Read reads in the object store and returns false if the object is not found
-// if it is found then the binary is unmarshalled into the Object.
-// CONTRACT: Object must be a pointer for the unmarshalling to take effect.
-func (s Store) Read(key types.PrimaryKey, o types.Object) (ok bool) {
-	return s.objects.read(key, o)
-}
-
-func (s Store) IterateKeys(do func(pk types.PrimaryKey) bool) {
-	s.objects.iterate(do)
-}
-
-// Update updates the given Object in the objects store
-// after clearing the indexes and reapplying them based on the
-// new update.
-// To achieve so a zeroed copy of Object is created which is used to
-// unmarshal the old object contents which is necessary for the un-indexing.
-func (s Store) Update(newObject types.Object) {
-	pk := newObject.PrimaryKey()
-	// remove old indexes
-	s.indexes.delete(pk)
-	// set new object
-	s.objects.update(newObject)
-	// index new object
-	s.indexes.create(newObject)
-}
-
-// Delete deletes an object from the object store after
-// clearing its indexes, the object is required to provide
-// a kind to clone in order to remove indexes related
-func (s Store) Delete(pk types.PrimaryKey) {
-	// remove indexes
-	s.indexes.delete(pk)
-	// remove key
-	s.objects.delete(pk)
-}
-
-func (s Store) getPrimaryKeys(filters []types.SecondaryKey) []types.PrimaryKey {
-	sets := make([]set, 0, len(filters))
-	for _, fltr := range filters {
-		set := make(keySet)
-		s.indexes.iterate(fltr, func(key types.PrimaryKey) bool {
-			set.Insert(key)
-			return true
-		})
-		sets = append(sets, set)
-	}
-	return primaryKeysFromSets(sets)
+func (c *Cursor) currKey() []byte {
+	return c.keys[c.keyIndex]
 }
