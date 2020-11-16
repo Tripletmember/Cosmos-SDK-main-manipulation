@@ -1,150 +1,82 @@
 package store
 
 import (
-	"crypto/rand"
-	"fmt"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	"github.com/iov-one/cosmos-sdk-crud/pkg/crud/types"
+	"errors"
+	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
+	"github.com/fdymylja/cosmos-sdk-oodb/internal/test"
 	"reflect"
 	"testing"
 )
 
-func TestNewStore(t *testing.T) {
-	_ = NewStore(testCtx, testKey, testCdc, []byte{0x0})
-}
-
-type testStoreObject struct {
-	Key    string
-	Index1 string
-	Index2 string
-}
-
-func (t testStoreObject) PrimaryKey() types.PrimaryKey {
-	return types.NewPrimaryKey([]byte(t.Key))
-}
-
-func (t testStoreObject) SecondaryKeys() []types.SecondaryKey {
-	var sk []types.SecondaryKey
-	if t.Index1 != "" {
-		sk = append(sk, types.NewSecondaryKey(0x1, []byte(t.Index1)))
-	}
-	if t.Index2 != "" {
-		sk = append(sk, types.NewSecondaryKey(0x2, []byte(t.Index2)))
-
-	}
-	return sk
-}
-
-func newTestStoreObject() *testStoreObject {
-	key := make([]byte, 8)
-	index1 := make([]byte, 8)
-	index2 := make([]byte, 8)
-	_, _ = rand.Read(key)
-	_, _ = rand.Read(index1)
-	_, _ = rand.Read(index2)
-	return &testStoreObject{
-		Key:    fmt.Sprintf("%x", key),
-		Index1: fmt.Sprintf("%x", index1),
-		Index2: fmt.Sprintf("%x", index2),
-	}
-}
-
 func TestStore(t *testing.T) {
-	store := NewStore(testCtx, testKey, testCdc, []byte{0x0})
-	obj := newTestStoreObject()
-	obj.Index2 = string([]byte{types.ReservedSeparator, 0x2, 0x3}) // put reserved separator in
-	store.Create(obj)
-	cpy := new(testStoreObject)
-	if !store.Read(obj.PrimaryKey(), cpy) {
-		t.Fatal("object not found")
+	db, cdc, err := test.NewStore()
+	if err != nil {
+		t.Fatal("failed precondition", err)
 	}
-	if !reflect.DeepEqual(cpy, obj) {
-		t.Fatal("objects do not match")
+	s := NewStore(cdc, db, nil)
+	obj := test.NewDeterministicObject()
+	// test create
+	err = s.Create(obj)
+	if err != nil {
+		t.Fatal(err)
 	}
-	// update object
-	oldIndex := obj.Index2
-	obj.Index2 = "updated"
-	store.Update(obj)
-	if !store.Read(obj.PrimaryKey(), cpy) {
-		t.Fatal("object deleted after update")
+	// test read
+	var expected test.Object
+	err = s.Read(obj.PrimaryKey(), &expected)
+	if err != nil {
+		t.Fatal(err)
 	}
-	// check if indexes were updated
-	filter := store.Filter(&testStoreObject{Index2: "updated"})
-	if !filter.Valid() {
-		t.Fatal("index was not updated")
+	if !reflect.DeepEqual(expected, obj) {
+		t.Fatal("unexpected result")
 	}
-	filter.Read(cpy)
-	if !reflect.DeepEqual(cpy, obj) {
-		t.Fatal("objects do not match")
+	// test update
+	update := obj
+	update.TestSecondaryKeyB = []byte("test-update")
+	err = s.Update(update)
+	if err != nil {
+		t.Fatal(err)
 	}
-	// try read from deleted index
-	filter = store.Filter(&testStoreObject{Index2: oldIndex})
-	if filter.Valid() {
-		t.Fatal("old index was not removed")
+	err = s.Read(obj.PrimaryKey(), &expected)
+	if err != nil {
+		t.Fatal(err)
 	}
-	// delete object
-	store.Delete(obj.PrimaryKey())
-	// check if anything was left in the store
-	it := store.raw.Iterator(nil, nil)
-	defer it.Close()
-	if it.Valid() {
-		t.Fatal("nothing should be in the store")
+	if !reflect.DeepEqual(update, expected) {
+		t.Fatal("unexpected result")
 	}
-}
-
-func TestFilterAndIterateKeys(t *testing.T) {
-	x := 5
-	objs := make([]*testStoreObject, x)
-	for i := 0; i < x; i++ {
-		objs[i] = newTestStoreObject()
-		objs[i].Index1 = objs[0].Index1 // set same index
+	// test cursor
+	crs, err := s.Query([]types.SecondaryKey{
+		update.FirstSecondaryKey(),
+	}, 0, 0)
+	if err != nil {
+		t.Fatal(err)
 	}
-	// create objects
-	store := NewStore(testCtx, testKey, testCdc, []byte{0x0})
-	// create objects
-	for _, obj := range objs {
-		store.Create(obj)
+	// test read
+	err = crs.Read(&expected)
+	if err != nil {
+		t.Logf("%s", crs.currKey())
+		t.Fatal(err)
 	}
-	// check if object number is correct
-	primaryKeys := make([]types.PrimaryKey, 0, x)
-	store.IterateKeys(func(pk types.PrimaryKey) bool {
-		primaryKeys = append(primaryKeys, pk)
-		return true
-	})
-	if len(primaryKeys) != x {
-		t.Fatal("unexpected number of keys", len(primaryKeys), x)
+	if !reflect.DeepEqual(expected, update) {
+		t.Fatal("unexpected result")
 	}
-	// delete based on primaryKeysFromSets
-	filter := store.Filter(&testStoreObject{Index1: objs[0].Index1}) // delete based on same index
-	for ; filter.Valid(); filter.Next() {
-		filter.Delete()
+	// test update
+	update.TestSecondaryKeyA = []byte("another-update")
+	err = crs.Update(update)
+	if err != nil {
+		t.Fatal(err)
 	}
-	// try to read primary keys and check if they're deleted
-	for i, obj := range objs {
-		if store.objects.(_objects).store.Has(obj.PrimaryKey().Key()) {
-			t.Fatalf("key not deleted %d %#v", i, obj)
-		}
+	expected.Reset()
+	err = crs.Read(&expected)
+	if !reflect.DeepEqual(expected, update) {
+		t.Fatal(err)
 	}
-	// now try to iterate indexes and check if index keys were removed
-	for _, obj := range objs {
-		for _, sk := range obj.SecondaryKeys() {
-			if prefix.NewStore(store.indexes.(_indexes).pointers, []byte{sk.Prefix()}).Has(sk.Key()) {
-				t.Fatal("index not removed")
-			}
-		}
+	// test delete
+	err = crs.Delete()
+	if err != nil {
+		t.Fatal(err)
 	}
-	// try to filter again
-	filter = store.Filter(&testStoreObject{Index1: objs[0].Index1})
-	if filter.Valid() {
-		t.Fatal("no valid keys should exist")
-	}
-	// try to filter by secondary index
-	filter = store.Filter(&testStoreObject{Index2: objs[0].Index2})
-	if filter.Valid() {
-		t.Fatalf("no valid keys should exist")
-	}
-	iterator := store.raw.Iterator(nil, nil)
-	for ; iterator.Valid(); iterator.Next() {
-		t.Logf("%s", iterator.Key())
+	err = crs.Read(&expected)
+	if !errors.Is(err, types.ErrNotFound) {
+		t.Fatal("unexpected error", err)
 	}
 }
