@@ -2,8 +2,8 @@ package objects
 
 import (
 	"errors"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/test"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 	"reflect"
 	"testing"
 )

@@ -5,10 +5,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/indexes"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/metadata"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/objects"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/indexes"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/metadata"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/objects"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
 
 // DefaultVerifyType asserts that the type is not verified when

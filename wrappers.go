@@ -2,8 +2,8 @@ package crud
 
 import (
 	"errors"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
 
 // toExternalError converts a crud internal error to external

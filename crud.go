@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store"
 )
 
 // errors mirroring internal crud's error
