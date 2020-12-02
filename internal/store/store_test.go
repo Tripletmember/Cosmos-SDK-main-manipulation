@@ -2,10 +2,11 @@ package store
 
 import (
 	"errors"
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
-	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 	"reflect"
 	"testing"
+
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 )
 
 func TestStore(t *testing.T) {
@@ -31,7 +32,7 @@ func TestStore(t *testing.T) {
 	}
 	// test update
 	update := obj
-	update.TestSecondaryKeyB = []byte("test-update")
+	update.ProtobufObject.TestSecondaryKeyB = []byte("test-update")
 	err = s.Update(update)
 	if err != nil {
 		t.Fatal(err)
@@ -60,7 +61,7 @@ func TestStore(t *testing.T) {
 		t.Fatal("unexpected result")
 	}
 	// test update
-	update.TestSecondaryKeyA = []byte("another-update")
+	update.ProtobufObject.TestSecondaryKeyA = []byte("another-update")
 	err = crs.Update(update)
 	if err != nil {
 		t.Fatal(err)

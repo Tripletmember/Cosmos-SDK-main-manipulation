@@ -2,13 +2,14 @@ package objects
 
 import (
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
 
 // NewStore is Store's constructor
-func NewStore(cdc *codec.Codec, db sdk.KVStore) Store {
+func NewStore(cdc codec.Marshaler, db sdk.KVStore) Store {
 	return Store{
 		db:  db,
 		cdc: cdc,
@@ -18,11 +19,11 @@ func NewStore(cdc *codec.Codec, db sdk.KVStore) Store {
 // Store builds an object store
 type Store struct {
 	db  sdk.KVStore
-	cdc *codec.Codec
+	cdc codec.Marshaler
 }
 
 // Create creates the object in the store
-// returns an error if i t already exists
+// returns an error if it already exists
 // or if marshalling fails
 func (s Store) Create(o types.Object) error {
 	pk := o.PrimaryKey()
@@ -75,7 +76,7 @@ func (s Store) Delete(primaryKey []byte) error {
 
 // set takes care of doing object marshalling
 // and setting it in the store
-func (s Store) set(key []byte, o interface{}) error {
+func (s Store) set(key []byte, o codec.ProtoMarshaler) error {
 	b, err := s.cdc.MarshalBinaryLengthPrefixed(o)
 	if err != nil {
 		return err

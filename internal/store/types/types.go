@@ -2,6 +2,8 @@ package types
 
 import (
 	"fmt"
+
+	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 type SecondaryKey struct {
@@ -14,6 +16,8 @@ func (s SecondaryKey) String() string {
 }
 
 type Object interface {
+	codec.ProtoMarshaler
+
 	SecondaryKeys() []SecondaryKey
 	PrimaryKey() []byte
 }

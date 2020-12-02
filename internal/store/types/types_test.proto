@@ -1,0 +1,15 @@
+syntax="proto3";
+package cosmosSdkCrud.internal.store.types.v1beta1;
+
+option go_package="github.com/iov-one/cosmos-sdk-crud/internal/store/types";
+
+
+// TestObject is a mock object used to test the store
+message TestObject {
+	// TestPrimaryKey is a primary key
+	bytes TestPrimaryKey = 1;
+	// TestSecondaryKeyA is secondary key number one
+	bytes TestSecondaryKeyA = 2;
+	// TestSecondaryKeyB is secondary key number two
+	bytes TestSecondaryKeyB = 3;
+}

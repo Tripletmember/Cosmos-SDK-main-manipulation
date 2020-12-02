@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,7 +39,7 @@ func DoNotVerifyTypes(s *Store) {
 }
 
 type Store struct {
-	cdc *codec.Codec
+	cdc codec.Marshaler
 
 	verifyType bool
 
@@ -47,7 +48,7 @@ type Store struct {
 	metadata metadata.Store
 }
 
-func NewStore(cdc *codec.Codec, db sdk.KVStore, pfx []byte, options ...OptionFunc) Store {
+func NewStore(cdc codec.Marshaler, db sdk.KVStore, pfx []byte, options ...OptionFunc) Store {
 	prefixedStore := prefix.NewStore(db, pfx)
 	s := Store{
 		cdc:        cdc,

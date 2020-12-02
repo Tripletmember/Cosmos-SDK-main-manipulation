@@ -2,6 +2,7 @@ package crud
 
 import (
 	"errors"
+
 	"github.com/iov-one/cosmos-sdk-crud/internal/store"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
@@ -42,30 +43,43 @@ func toInternalOptions(opts []OptionFunc) []store.OptionFunc {
 // toInternalObject converts the exported object to the internal one
 func toInternalObject(o Object) types.Object {
 	extSks := o.SecondaryKeys()
-	sks := make([]types.SecondaryKey, len(extSks))
+	sks := make([]*types.InternalSecondaryKey, len(extSks))
 	for i, extSk := range extSks {
-		sks[i] = types.SecondaryKey{
-			ID:    byte(extSk.ID),
+		sks[i] = &types.InternalSecondaryKey{
+			ID:    int32(extSk.ID),
 			Value: extSk.Value,
 		}
 	}
 	return internalObjectWrapper{
-		pk:  o.PrimaryKey(),
-		sks: sks,
+		InternalObject: types.InternalObject{
+			PrimaryKey:    o.PrimaryKey(),
+			SecondaryKeys: sks,
+		},
+		WrappedObject: o,
 	}
 }
 
 type internalObjectWrapper struct {
-	pk  []byte
-	sks []types.SecondaryKey
+	types.Object
+
+	InternalObject types.InternalObject
+	WrappedObject  Object
 }
 
 func (i internalObjectWrapper) SecondaryKeys() []types.SecondaryKey {
-	return i.sks
+	sks := make([]types.SecondaryKey, len(i.InternalObject.SecondaryKeys))
+	for i, sk := range i.InternalObject.SecondaryKeys {
+		sks[i] = types.SecondaryKey{
+			ID:    byte(sk.ID),
+			Value: sk.Value,
+		}
+	}
+
+	return sks
 }
 
 func (i internalObjectWrapper) PrimaryKey() []byte {
-	return i.pk
+	return i.InternalObject.PrimaryKey
 }
 
 // storeWrapper wraps the internal store
