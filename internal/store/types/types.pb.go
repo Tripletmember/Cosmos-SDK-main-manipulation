@@ -23,114 +23,6 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type InternalSecondaryKey struct {
-	// TODO: FIXME what protobuf type to use for byte?
-	ID    int32  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty" yaml:"id"`
-	Value []byte `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty" yaml:"value"`
-}
-
-func (m *InternalSecondaryKey) Reset()         { *m = InternalSecondaryKey{} }
-func (m *InternalSecondaryKey) String() string { return proto.CompactTextString(m) }
-func (*InternalSecondaryKey) ProtoMessage()    {}
-func (*InternalSecondaryKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dca333a37d124c37, []int{0}
-}
-func (m *InternalSecondaryKey) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *InternalSecondaryKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_InternalSecondaryKey.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *InternalSecondaryKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_InternalSecondaryKey.Merge(m, src)
-}
-func (m *InternalSecondaryKey) XXX_Size() int {
-	return m.Size()
-}
-func (m *InternalSecondaryKey) XXX_DiscardUnknown() {
-	xxx_messageInfo_InternalSecondaryKey.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_InternalSecondaryKey proto.InternalMessageInfo
-
-func (m *InternalSecondaryKey) GetID() int32 {
-	if m != nil {
-		return m.ID
-	}
-	return 0
-}
-
-func (m *InternalSecondaryKey) GetValue() []byte {
-	if m != nil {
-		return m.Value
-	}
-	return nil
-}
-
-// InternalObject defines a structure that can be saved in the crud store
-type InternalObject struct {
-	// PrimaryKey is the unique id that identifies the object
-	PrimaryKey []byte `protobuf:"bytes,1,opt,name=primary_key,json=primaryKey,proto3" json:"primary_key,omitempty" yaml:"primary_key"`
-	// SecondaryKeys is an array containing the secondary keys used to map the object
-	SecondaryKeys []*InternalSecondaryKey `protobuf:"bytes,2,rep,name=secondary_keys,json=secondaryKeys,proto3" json:"secondary_keys,omitempty" yaml:"secondary_keys"`
-}
-
-func (m *InternalObject) Reset()         { *m = InternalObject{} }
-func (m *InternalObject) String() string { return proto.CompactTextString(m) }
-func (*InternalObject) ProtoMessage()    {}
-func (*InternalObject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dca333a37d124c37, []int{1}
-}
-func (m *InternalObject) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *InternalObject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_InternalObject.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *InternalObject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_InternalObject.Merge(m, src)
-}
-func (m *InternalObject) XXX_Size() int {
-	return m.Size()
-}
-func (m *InternalObject) XXX_DiscardUnknown() {
-	xxx_messageInfo_InternalObject.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_InternalObject proto.InternalMessageInfo
-
-func (m *InternalObject) GetPrimaryKey() []byte {
-	if m != nil {
-		return m.PrimaryKey
-	}
-	return nil
-}
-
-func (m *InternalObject) GetSecondaryKeys() []*InternalSecondaryKey {
-	if m != nil {
-		return m.SecondaryKeys
-	}
-	return nil
-}
-
 // indexList
 type IndexList struct {
 	// Indexes
@@ -141,7 +33,7 @@ func (m *IndexList) Reset()         { *m = IndexList{} }
 func (m *IndexList) String() string { return proto.CompactTextString(m) }
 func (*IndexList) ProtoMessage()    {}
 func (*IndexList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dca333a37d124c37, []int{2}
+	return fileDescriptor_dca333a37d124c37, []int{0}
 }
 func (m *IndexList) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -178,118 +70,27 @@ func (m *IndexList) GetIndexes() [][]byte {
 }
 
 func init() {
-	proto.RegisterType((*InternalSecondaryKey)(nil), "cosmosSdkCrud.internal.store.types.v1beta1.InternalSecondaryKey")
-	proto.RegisterType((*InternalObject)(nil), "cosmosSdkCrud.internal.store.types.v1beta1.InternalObject")
 	proto.RegisterType((*IndexList)(nil), "cosmosSdkCrud.internal.store.types.v1beta1.indexList")
 }
 
 func init() { proto.RegisterFile("internal/store/types/types.proto", fileDescriptor_dca333a37d124c37) }
 
 var fileDescriptor_dca333a37d124c37 = []byte{
-	// 382 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0x41, 0x6b, 0xdb, 0x30,
-	0x14, 0xc7, 0x23, 0x87, 0x6c, 0x44, 0xf1, 0xc2, 0xf0, 0xb2, 0xe1, 0xed, 0x60, 0x1b, 0x0d, 0x86,
-	0x19, 0x8b, 0x4d, 0xb6, 0x43, 0xd8, 0x4e, 0xc3, 0xdb, 0x25, 0x6c, 0x30, 0xe6, 0xdc, 0x7a, 0x29,
-	0xb6, 0x25, 0x52, 0x35, 0xb1, 0x15, 0x24, 0x39, 0xd4, 0xd7, 0x7e, 0x82, 0x7e, 0xac, 0x9e, 0x4a,
-	0x8e, 0x3d, 0x99, 0xe2, 0x7c, 0x03, 0x7f, 0x82, 0x12, 0x2b, 0x86, 0x14, 0x72, 0xe8, 0xc5, 0xf8,
-	0xe9, 0xff, 0x7b, 0xef, 0xff, 0xde, 0x93, 0xa0, 0x43, 0x33, 0x49, 0x78, 0x16, 0xad, 0x7c, 0x21,
-	0x19, 0x27, 0xbe, 0x2c, 0xd6, 0x44, 0xa8, 0xaf, 0xb7, 0xe6, 0x4c, 0x32, 0xe3, 0x73, 0xc2, 0x44,
-	0xca, 0xc4, 0x1c, 0x2f, 0x7f, 0xf1, 0x1c, 0x7b, 0x2d, 0xef, 0x35, 0xbc, 0xa7, 0xc8, 0xcd, 0x24,
-	0x26, 0x32, 0x9a, 0x7c, 0x18, 0x2d, 0xd8, 0x82, 0x35, 0x69, 0xfe, 0xfe, 0x4f, 0x55, 0x40, 0x09,
-	0x1c, 0xcd, 0x0e, 0x59, 0x73, 0x92, 0xb0, 0x0c, 0x47, 0xbc, 0xf8, 0x43, 0x0a, 0xe3, 0x23, 0xd4,
-	0x28, 0x36, 0x81, 0x03, 0xdc, 0x5e, 0xf0, 0xa6, 0x2a, 0x6d, 0x6d, 0xf6, 0xbb, 0x2e, 0xed, 0x7e,
-	0x11, 0xa5, 0xab, 0x1f, 0x88, 0x62, 0x14, 0x6a, 0x14, 0x1b, 0x9f, 0x60, 0x6f, 0x13, 0xad, 0x72,
-	0x62, 0x6a, 0x0e, 0x70, 0xf5, 0xe0, 0x75, 0x5d, 0xda, 0xba, 0x22, 0x9a, 0x63, 0x14, 0x2a, 0x19,
-	0xdd, 0x01, 0x38, 0x6c, 0x5d, 0xfe, 0xc5, 0x97, 0x24, 0x91, 0xc6, 0x14, 0x0e, 0xd6, 0x9c, 0xa6,
-	0x11, 0x2f, 0xce, 0x97, 0xa4, 0x68, 0x8c, 0xf4, 0xe0, 0x5d, 0x5d, 0xda, 0x86, 0x2a, 0x70, 0x24,
-	0xa2, 0x10, 0x1e, 0xa2, 0x7d, 0x63, 0xd7, 0x00, 0x0e, 0x45, 0xdb, 0xe9, 0x5e, 0x16, 0xa6, 0xe6,
-	0x74, 0xdd, 0xc1, 0xd7, 0x9f, 0xde, 0xf3, 0x97, 0xe1, 0x9d, 0x9a, 0x39, 0x78, 0x5f, 0x97, 0xf6,
-	0x5b, 0x65, 0xff, 0xd4, 0x01, 0x85, 0xaf, 0xc4, 0x11, 0x28, 0xd0, 0x77, 0xd8, 0xa7, 0x19, 0x26,
-	0x57, 0x7f, 0xa9, 0x90, 0xc6, 0x17, 0xf8, 0xb2, 0x09, 0x88, 0x30, 0x81, 0xd3, 0x75, 0xf5, 0xc0,
-	0xa8, 0x4b, 0x7b, 0x78, 0xd8, 0x94, 0x12, 0x50, 0xd8, 0x22, 0xc1, 0xff, 0xdb, 0xca, 0x02, 0xdb,
-	0xca, 0x02, 0x0f, 0x95, 0x05, 0x6e, 0x76, 0x56, 0x67, 0xbb, 0xb3, 0x3a, 0xf7, 0x3b, 0xab, 0x73,
-	0x36, 0x5d, 0x50, 0x79, 0x91, 0xc7, 0x5e, 0xc2, 0x52, 0x9f, 0xb2, 0xcd, 0x98, 0x65, 0xc4, 0x57,
-	0x23, 0x8d, 0x05, 0x5e, 0x8e, 0x13, 0x9e, 0x63, 0xff, 0xd4, 0x8b, 0x88, 0x5f, 0x34, 0x57, 0xf9,
-	0xed, 0x31, 0x00, 0x00, 0xff, 0xff, 0xfb, 0xb2, 0xe3, 0x46, 0x30, 0x02, 0x00, 0x00,
-}
-
-func (m *InternalSecondaryKey) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *InternalSecondaryKey) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *InternalSecondaryKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Value) > 0 {
-		i -= len(m.Value)
-		copy(dAtA[i:], m.Value)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Value)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.ID != 0 {
-		i = encodeVarintTypes(dAtA, i, uint64(m.ID))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *InternalObject) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *InternalObject) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *InternalObject) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.SecondaryKeys) > 0 {
-		for iNdEx := len(m.SecondaryKeys) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.SecondaryKeys[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintTypes(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if len(m.PrimaryKey) > 0 {
-		i -= len(m.PrimaryKey)
-		copy(dAtA[i:], m.PrimaryKey)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.PrimaryKey)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
+	// 211 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0xc8, 0xcc, 0x2b, 0x49,
+	0x2d, 0xca, 0x4b, 0xcc, 0xd1, 0x2f, 0x2e, 0xc9, 0x2f, 0x4a, 0xd5, 0x2f, 0xa9, 0x2c, 0x48, 0x2d,
+	0x86, 0x90, 0x7a, 0x05, 0x45, 0xf9, 0x25, 0xf9, 0x42, 0x5a, 0xc9, 0xf9, 0xc5, 0xb9, 0xf9, 0xc5,
+	0xc1, 0x29, 0xd9, 0xce, 0x45, 0xa5, 0x29, 0x7a, 0x30, 0xf5, 0x7a, 0x60, 0xf5, 0x7a, 0x10, 0x95,
+	0x65, 0x86, 0x49, 0xa9, 0x25, 0x89, 0x86, 0x52, 0x22, 0xe9, 0xf9, 0xe9, 0xf9, 0x60, 0x6d, 0xfa,
+	0x20, 0x16, 0xc4, 0x04, 0x25, 0x4b, 0x2e, 0xce, 0xcc, 0xbc, 0x94, 0xd4, 0x0a, 0x9f, 0xcc, 0xe2,
+	0x12, 0x21, 0x1d, 0x2e, 0x76, 0x30, 0x27, 0xb5, 0x58, 0x82, 0x51, 0x81, 0x59, 0x83, 0xc7, 0x49,
+	0xe8, 0xd3, 0x3d, 0x79, 0xbe, 0xca, 0xc4, 0xdc, 0x1c, 0x2b, 0x25, 0xa8, 0x84, 0x52, 0x10, 0x4c,
+	0x89, 0x53, 0xe0, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38,
+	0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0x99, 0xa7, 0x67,
+	0x96, 0x64, 0x94, 0x26, 0xe9, 0x25, 0xe7, 0xe7, 0xea, 0x67, 0xe6, 0x97, 0xe9, 0xe6, 0xe7, 0xa5,
+	0xea, 0x43, 0x5c, 0xaa, 0x5b, 0x9c, 0x92, 0xad, 0x9b, 0x5c, 0x54, 0x9a, 0xa2, 0x8f, 0xcd, 0x6f,
+	0x49, 0x6c, 0x60, 0x47, 0x19, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0x95, 0x22, 0xd9, 0xfd, 0xfa,
+	0x00, 0x00, 0x00,
 }
 
 func (m *IndexList) Marshal() (dAtA []byte, err error) {
@@ -335,41 +136,6 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *InternalSecondaryKey) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.ID != 0 {
-		n += 1 + sovTypes(uint64(m.ID))
-	}
-	l = len(m.Value)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
-	}
-	return n
-}
-
-func (m *InternalObject) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.PrimaryKey)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
-	}
-	if len(m.SecondaryKeys) > 0 {
-		for _, e := range m.SecondaryKeys {
-			l = e.Size()
-			n += 1 + l + sovTypes(uint64(l))
-		}
-	}
-	return n
-}
-
 func (m *IndexList) Size() (n int) {
 	if m == nil {
 		return 0
@@ -390,233 +156,6 @@ func sovTypes(x uint64) (n int) {
 }
 func sozTypes(x uint64) (n int) {
 	return sovTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
-}
-func (m *InternalSecondaryKey) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: InternalSecondaryKey: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: InternalSecondaryKey: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
-			}
-			m.ID = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.ID |= int32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Value = append(m.Value[:0], dAtA[iNdEx:postIndex]...)
-			if m.Value == nil {
-				m.Value = []byte{}
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *InternalObject) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: InternalObject: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: InternalObject: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PrimaryKey", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PrimaryKey = append(m.PrimaryKey[:0], dAtA[iNdEx:postIndex]...)
-			if m.PrimaryKey == nil {
-				m.PrimaryKey = []byte{}
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SecondaryKeys", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.SecondaryKeys = append(m.SecondaryKeys, &InternalSecondaryKey{})
-			if err := m.SecondaryKeys[len(m.SecondaryKeys)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
 }
 func (m *IndexList) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)

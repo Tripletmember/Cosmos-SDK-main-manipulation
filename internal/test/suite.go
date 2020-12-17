@@ -2,6 +2,7 @@ package test
 
 import (
 	"crypto/rand"
+	"fmt"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -20,7 +21,7 @@ const IndexID_A = 0x0
 const IndexID_B = 0x1
 
 // assert types.Object is implemented by test Object
-var _ = types.Object(Object{})
+var _ = types.Object(NewObject())
 
 // NewStore builds a new store
 func NewStore() (sdk.KVStore, codec.Marshaler, error) {
@@ -56,7 +57,7 @@ func NewDeterministicObject() Object {
 	skA := []byte("secondary-key")
 	skB := []byte("secondary-key1")
 	return Object{
-		ProtobufObject: types.TestObject{
+		&types.TestObject{
 			TestPrimaryKey:    pk,
 			TestSecondaryKeyA: skA,
 			TestSecondaryKeyB: skB,
@@ -81,7 +82,7 @@ func NewRandomObject() Object {
 		panic(err)
 	}
 	return Object{
-		ProtobufObject: types.TestObject{
+		&types.TestObject{
 			TestPrimaryKey:    pk,
 			TestSecondaryKeyA: skA,
 			TestSecondaryKeyB: append(skA, skB...),
@@ -90,46 +91,29 @@ func NewRandomObject() Object {
 }
 
 type Object struct {
-	types.Object
-
-	ProtobufObject types.TestObject
+	*types.TestObject
 }
 
-func (o Object) Marshal() (bz []byte, err error) {
-	return o.ProtobufObject.Marshal()
-}
+func NewObject() *Object {
+	testObject := types.TestObject{}
+	object := Object{&testObject}
 
-func (o Object) MarshalTo(bz []byte) (n int, err error) {
-	return o.ProtobufObject.MarshalTo(bz)
-}
-
-func (o Object) MarshalToSizedBuffer(bz []byte) (int, error) {
-	return o.ProtobufObject.MarshalToSizedBuffer(bz)
-}
-
-func (o Object) Size() (n int) {
-	return o.ProtobufObject.Size()
-}
-
-func (o Object) Unmarshal(bz []byte) (err error) {
-	// TODO: USEME return o.ProtobufObject.Unmarshal(bz)
-	err = o.ProtobufObject.Unmarshal(bz)
-	return err
+	return &object
 }
 
 func (o Object) PrimaryKey() (primaryKey []byte) {
-	return o.ProtobufObject.TestPrimaryKey
+	return o.TestPrimaryKey
 }
 
 func (o Object) SecondaryKeys() (secondaryKeys []types.SecondaryKey) {
 	return []types.SecondaryKey{
 		{
 			ID:    IndexID_A,
-			Value: o.ProtobufObject.TestSecondaryKeyA,
+			Value: o.TestSecondaryKeyA,
 		},
 		{
 			ID:    IndexID_B,
-			Value: o.ProtobufObject.TestSecondaryKeyB,
+			Value: o.TestSecondaryKeyB,
 		},
 	}
 }
@@ -137,19 +121,39 @@ func (o Object) SecondaryKeys() (secondaryKeys []types.SecondaryKey) {
 func (o Object) FirstSecondaryKey() types.SecondaryKey {
 	return types.SecondaryKey{
 		ID:    IndexID_A,
-		Value: o.ProtobufObject.TestSecondaryKeyA,
+		Value: o.TestSecondaryKeyA,
 	}
 }
 
 func (o Object) SecondSecondaryKey() types.SecondaryKey {
 	return types.SecondaryKey{
 		ID:    IndexID_B,
-		Value: o.ProtobufObject.TestSecondaryKeyB,
+		Value: o.TestSecondaryKeyB,
 	}
 }
 
-func (o Object) Reset() {
-	o.ProtobufObject.TestSecondaryKeyA = nil
-	o.ProtobufObject.TestPrimaryKey = nil
-	o.ProtobufObject.TestSecondaryKeyB = nil
+func (this *Object) Equals(that *Object) error {
+	tester := func(a []uint8, b []uint8) error {
+		if len(a) != len(b) {
+			return fmt.Errorf("len(a) == %d != len(b) == %d", len(a), len(b))
+		}
+		for i, ai := range a {
+			if ai != b[i] {
+				return fmt.Errorf("a[%d] == %d != b[%d] == %d", i, ai, i, b[i])
+			}
+		}
+		return nil
+	}
+
+	if err := tester(this.TestPrimaryKey, that.TestPrimaryKey); err != nil {
+		return err
+	}
+	if err := tester(this.TestSecondaryKeyA, that.TestSecondaryKeyA); err != nil {
+		return err
+	}
+	if err := tester(this.TestSecondaryKeyB, that.TestSecondaryKeyB); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -29,7 +29,7 @@ type OptionFunc func()
 // for example an index ID might be
 // the email index, which is represented by
 // the unique byte identifier 0x0
-type IndexID int32
+type IndexID byte
 
 // SecondaryKey represents a secondary key for an object
 type SecondaryKey struct {

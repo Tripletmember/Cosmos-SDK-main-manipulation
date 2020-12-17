@@ -4,8 +4,6 @@
 ## Table of Contents
 
 - [internal/store/types/types.proto](#internal/store/types/types.proto)
-    - [InternalObject](#cosmosSdkCrud.internal.store.types.v1beta1.InternalObject)
-    - [InternalSecondaryKey](#cosmosSdkCrud.internal.store.types.v1beta1.InternalSecondaryKey)
     - [indexList](#cosmosSdkCrud.internal.store.types.v1beta1.indexList)
   
 - [internal/store/types/types_test.proto](#internal/store/types/types_test.proto)
@@ -19,38 +17,6 @@
 <p align="right"><a href="#top">Top</a></p>
 
 ## internal/store/types/types.proto
-
-
-
-<a name="cosmosSdkCrud.internal.store.types.v1beta1.InternalObject"></a>
-
-### InternalObject
-InternalObject defines a structure that can be saved in the crud store
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| primary_key | [bytes](#bytes) |  | PrimaryKey is the unique id that identifies the object |
-| secondary_keys | [InternalSecondaryKey](#cosmosSdkCrud.internal.store.types.v1beta1.InternalSecondaryKey) | repeated | SecondaryKeys is an array containing the secondary keys used to map the object |
-
-
-
-
-
-
-<a name="cosmosSdkCrud.internal.store.types.v1beta1.InternalSecondaryKey"></a>
-
-### InternalSecondaryKey
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  | TODO: FIXME what protobuf type to use for byte? |
-| value | [bytes](#bytes) |  |  |
-
-
-
 
 
 

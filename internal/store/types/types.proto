@@ -6,29 +6,6 @@ import "gogoproto/gogo.proto";
 option go_package="github.com/iov-one/cosmos-sdk-crud/internal/store/types";
 
 
-message InternalSecondaryKey {
-    // TODO: FIXME what protobuf type to use for byte?
-    int32 id = 1 [
-        (gogoproto.moretags) = "yaml:\"id\"",
-        (gogoproto.customname) = "ID"
-    ];
-	 bytes value = 2 [
-        (gogoproto.moretags) = "yaml:\"value\""
-    ];
-}
-
-// InternalObject defines a structure that can be saved in the crud store
-message InternalObject {
- 	// PrimaryKey is the unique id that identifies the object
-    bytes primary_key = 1 [
-        (gogoproto.moretags) = "yaml:\"primary_key\""
-    ];
-	// SecondaryKeys is an array containing the secondary keys used to map the object
-   repeated InternalSecondaryKey secondary_keys = 2 [
-        (gogoproto.moretags) = "yaml:\"secondary_keys\""
-    ];
-}
-
 // indexList
 message indexList {
    // Indexes

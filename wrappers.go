@@ -43,43 +43,66 @@ func toInternalOptions(opts []OptionFunc) []store.OptionFunc {
 // toInternalObject converts the exported object to the internal one
 func toInternalObject(o Object) types.Object {
 	extSks := o.SecondaryKeys()
-	sks := make([]*types.InternalSecondaryKey, len(extSks))
+	sks := make([]types.SecondaryKey, len(extSks))
 	for i, extSk := range extSks {
-		sks[i] = &types.InternalSecondaryKey{
-			ID:    int32(extSk.ID),
+		sks[i] = types.SecondaryKey{
+			ID:    byte(extSk.ID),
 			Value: extSk.Value,
 		}
 	}
 	return internalObjectWrapper{
-		InternalObject: types.InternalObject{
-			PrimaryKey:    o.PrimaryKey(),
-			SecondaryKeys: sks,
-		},
-		WrappedObject: o,
+		pk:  o.PrimaryKey(),
+		sks: sks,
 	}
 }
 
 type internalObjectWrapper struct {
-	types.Object
-
-	InternalObject types.InternalObject
-	WrappedObject  Object
+	pk  []byte
+	sks []types.SecondaryKey
 }
 
 func (i internalObjectWrapper) SecondaryKeys() []types.SecondaryKey {
-	sks := make([]types.SecondaryKey, len(i.InternalObject.SecondaryKeys))
-	for i, sk := range i.InternalObject.SecondaryKeys {
-		sks[i] = types.SecondaryKey{
-			ID:    byte(sk.ID),
-			Value: sk.Value,
-		}
-	}
-
-	return sks
+	return i.sks
 }
 
 func (i internalObjectWrapper) PrimaryKey() []byte {
-	return i.InternalObject.PrimaryKey
+	return i.pk
+}
+
+func (i internalObjectWrapper) Marshal() (bz []byte, err error) {
+	panic("not implemented")
+}
+
+func (i internalObjectWrapper) MarshalTo(bz []byte) (n int, err error) {
+	panic("not implemented")
+}
+
+func (i internalObjectWrapper) MarshalToSizedBuffer(bz []byte) (int, error) {
+	panic("not implemented")
+}
+
+func (i internalObjectWrapper) Size() (n int) {
+	panic("not implemented")
+}
+
+func (i internalObjectWrapper) Unmarshal(bz []byte) (err error) {
+	panic("not implemented")
+}
+
+func (i internalObjectWrapper) Reset() {
+	panic("not implemented")
+}
+
+func (i internalObjectWrapper) String() string {
+	panic("not implemented")
+}
+
+func (i internalObjectWrapper) ProtoMessage() {
+	panic("not implemented")
+}
+
+func (i internalObjectWrapper) Descriptor() ([]byte, []int) {
+	panic("not implemented")
 }
 
 // storeWrapper wraps the internal store
