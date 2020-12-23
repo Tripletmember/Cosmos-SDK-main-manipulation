@@ -140,17 +140,14 @@ func newFilter(primaryKeys [][]byte, store Store) *Cursor {
 type Cursor struct {
 	maxKeys  int
 	keyIndex int
-	valid    bool
 	keys     [][]byte
 	store    Store
 }
 
 func (c *Cursor) Next() {
-	if c.keyIndex+1 == c.maxKeys {
-		c.valid = false
-		return
+	if c.keyIndex < c.maxKeys {
+		c.keyIndex += 1
 	}
-	c.keyIndex += 1
 }
 
 func (c *Cursor) Read(o types.Object) error {
@@ -166,10 +163,7 @@ func (c *Cursor) Update(o types.Object) error {
 }
 
 func (c *Cursor) Valid() bool {
-	if len(c.keys) == 0 {
-		return false
-	}
-	return c.valid
+	return c.keyIndex < c.maxKeys
 }
 
 func (c *Cursor) currKey() []byte {
