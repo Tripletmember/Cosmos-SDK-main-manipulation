@@ -129,7 +129,7 @@ func (s Store) QueryAll(sk types.SecondaryKey) (primaryKeys [][]byte, err error)
 // exact part of the index which we want to query, to query the whole index domain just put start and
 // end as 0 the primary keys found will be passed to the 'do' function, if 'do' returns false, the
 // iteration is stopped.
-func (s Store) Query(sk types.SecondaryKey, start, end uint64, do func(primaryKey []byte) (stop bool)) error {
+func (s Store) Query(sk types.SecondaryKey, start, end uint64, do func(primaryKey []byte) (keepGoing bool)) error {
 	return s.getPrimaryKeysFromIndex(sk, start, end, do)
 }
 
