@@ -51,14 +51,30 @@ func toInternalObject(o Object) types.Object {
 		}
 	}
 	return internalObjectWrapper{
-		pk:  o.PrimaryKey(),
-		sks: sks,
+		pk:                   o.PrimaryKey(),
+		sks:                  sks,
+		marshal:              o.Marshal,
+		marshalTo:            o.MarshalTo,
+		marshalToSizedBuffer: o.MarshalToSizedBuffer,
+		size:                 o.Size,
+		unmarshal:            o.Unmarshal,
+		reset:                o.Reset,
+		toString:             o.String,
+		protoMessage:         o.ProtoMessage,
 	}
 }
 
 type internalObjectWrapper struct {
-	pk  []byte
-	sks []types.SecondaryKey
+	pk                   []byte
+	sks                  []types.SecondaryKey
+	marshal              func() ([]byte, error)
+	marshalTo            func([]byte) (int, error)
+	marshalToSizedBuffer func([]byte) (int, error)
+	size                 func() int
+	unmarshal            func([]byte) error
+	reset                func()
+	toString             func() string
+	protoMessage         func()
 }
 
 func (i internalObjectWrapper) SecondaryKeys() []types.SecondaryKey {
@@ -70,39 +86,35 @@ func (i internalObjectWrapper) PrimaryKey() []byte {
 }
 
 func (i internalObjectWrapper) Marshal() (bz []byte, err error) {
-	panic("not implemented")
+	return i.marshal()
 }
 
 func (i internalObjectWrapper) MarshalTo(bz []byte) (n int, err error) {
-	panic("not implemented")
+	return i.marshalTo(bz)
 }
 
 func (i internalObjectWrapper) MarshalToSizedBuffer(bz []byte) (int, error) {
-	panic("not implemented")
+	return i.marshalToSizedBuffer(bz)
 }
 
 func (i internalObjectWrapper) Size() (n int) {
-	panic("not implemented")
+	return i.size()
 }
 
 func (i internalObjectWrapper) Unmarshal(bz []byte) (err error) {
-	panic("not implemented")
+	return i.unmarshal(bz)
 }
 
 func (i internalObjectWrapper) Reset() {
-	panic("not implemented")
+	i.reset()
 }
 
 func (i internalObjectWrapper) String() string {
-	panic("not implemented")
+	return i.toString()
 }
 
 func (i internalObjectWrapper) ProtoMessage() {
-	panic("not implemented")
-}
-
-func (i internalObjectWrapper) Descriptor() ([]byte, []int) {
-	panic("not implemented")
+	i.protoMessage()
 }
 
 // storeWrapper wraps the internal store
