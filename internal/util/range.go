@@ -11,7 +11,7 @@ func NewRange(start, end uint64) (*Range, error) {
 	return &Range{
 		start: start,
 		end:   end,
-		index: 0,
+		index: start,
 	}, nil
 }
 
@@ -30,7 +30,7 @@ func (r *Range) CheckAndMoveForward() (inRange bool, stopIter bool) {
 		return false, true
 	}
 	// check if it's included
-	if r.index >= r.start && r.index <= r.end {
+	if r.start <= r.index && r.index < r.end {
 		r.index += 1
 		return true, false
 	}
