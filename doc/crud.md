@@ -8,6 +8,7 @@
   
 - [internal/store/types/types_test.proto](#internal/store/types/types_test.proto)
     - [TestObject](#cosmosSdkCrud.internal.store.types.v1beta1.TestObject)
+    - [TestStarname](#cosmosSdkCrud.internal.store.types.v1beta1.TestStarname)
   
 - [Scalar Value Types](#scalar-value-types)
 
@@ -62,6 +63,23 @@ TestObject is a mock object used to test the store
 | TestPrimaryKey | [bytes](#bytes) |  | TestPrimaryKey is a primary key |
 | TestSecondaryKeyA | [bytes](#bytes) |  | TestSecondaryKeyA is secondary key number one |
 | TestSecondaryKeyB | [bytes](#bytes) |  | TestSecondaryKeyB is secondary key number two |
+
+
+
+
+
+
+<a name="cosmosSdkCrud.internal.store.types.v1beta1.TestStarname"></a>
+
+### TestStarname
+TestStarname defines a starname used by crud_test.go
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| owner | [string](#string) |  | Owner is the owner of the Starname |
+| domain | [string](#string) |  | Domain references the domain to which account belongs |
+| name | [google.protobuf.StringValue](#google.protobuf.StringValue) |  | Name is the name of the account |
 
 
 

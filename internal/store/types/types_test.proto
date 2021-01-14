@@ -1,6 +1,9 @@
 syntax="proto3";
 package cosmosSdkCrud.internal.store.types.v1beta1;
 
+import "gogoproto/gogo.proto";
+import "google/protobuf/wrappers.proto";
+
 option go_package="github.com/iov-one/cosmos-sdk-crud/internal/store/types";
 
 
@@ -12,4 +15,14 @@ message TestObject {
 	bytes TestSecondaryKeyA = 2;
 	// TestSecondaryKeyB is secondary key number two
 	bytes TestSecondaryKeyB = 3;
+}
+
+// TestStarname defines a starname used by crud_test.go
+message TestStarname {
+    // Owner is the owner of the Starname
+    string owner = 1 [(gogoproto.moretags) = "yaml:\"owner\""];
+    // Domain references the domain to which account belongs
+    string domain = 2 [(gogoproto.moretags) = "yaml:\"domain\""];
+    // Name is the name of the account
+    google.protobuf.StringValue name = 3 [(gogoproto.wktpointer) = true, (gogoproto.moretags) = "yaml:\"name\""];
 }
