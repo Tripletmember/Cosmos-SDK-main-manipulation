@@ -166,6 +166,7 @@ func Test_Starname(t *testing.T) {
 				if err := wants[i].Equals(starname); err != nil {
 					t.Fatal(errors.Wrapf(err, "byOwner[%s][%d]: %s != %s", owner, i, wants[i].GetStarname(), starname.GetStarname()))
 				}
+				i++
 			}
 		}
 	})
