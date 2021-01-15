@@ -160,7 +160,7 @@ func Test_Starname(t *testing.T) {
 					t.Fatal(err)
 				}
 				debugStarname(starname)
-				if i > len(wants) {
+				if i >= len(wants) {
 					t.Fatal("got more than expected")
 				}
 				if err := wants[i].Equals(starname); err != nil {
