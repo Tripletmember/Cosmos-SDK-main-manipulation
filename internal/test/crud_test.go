@@ -172,7 +172,6 @@ func Test_Starname(t *testing.T) {
 	})
 	t.Run("success on ranged owned accounts", func(t *testing.T) {
 		for _, owner := range owners {
-			continue // TODO: DELETEME
 			owned := starnamesByOwner[owner]
 			end := len(owned)
 			for i := 0; i < end; i++ {
@@ -198,13 +197,13 @@ func Test_Starname(t *testing.T) {
 }
 
 func debugStarname(starname *TestStarname) {
-	if len(os.Args) > 0 {
+	if len(os.Getenv("VSCODE_CLI")) > 0 {
 		fmt.Printf("%16s %-32x %v %v\n", starname.GetStarname(), starname.PrimaryKey(), starname.SecondaryKeys()[0], starname.SecondaryKeys()[1])
 	}
 }
 
 func debugStarnames(name string, starnames []*TestStarname) {
-	if len(os.Args) > 0 {
+	if len(os.Getenv("VSCODE_CLI")) > 0 {
 		fmt.Printf("___  %s ___\n", name)
 		for _, starname := range starnames {
 			debugStarname(starname)
