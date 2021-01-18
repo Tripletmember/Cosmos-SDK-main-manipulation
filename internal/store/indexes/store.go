@@ -134,7 +134,7 @@ func (s Store) Query(sk types.SecondaryKey, start, end uint64, do func(primaryKe
 }
 
 // getPrimaryKeysFromIndex gets all the primary keys from the given start-end range
-// start and end are inclusive, error is returned only in case the provided secondary key is invalid
+// start is inclusive, end is exclusive, error is returned only in case the provided secondary key is invalid
 func (s Store) getPrimaryKeysFromIndex(sk types.SecondaryKey, start uint64, end uint64, do func(primaryKey []byte) (stop bool)) error {
 	store, _, err := s.kvStore(sk)
 	if err != nil {
