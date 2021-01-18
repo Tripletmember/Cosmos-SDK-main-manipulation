@@ -40,5 +40,6 @@ func (s ByteSet) Range() [][]byte {
 		r[i] = v
 		i++
 	}
+	SortByteSlice(r) // deal with go's non-deterministic range on maps
 	return r
 }
