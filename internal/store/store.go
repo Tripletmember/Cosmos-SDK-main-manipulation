@@ -2,13 +2,14 @@ package store
 
 import (
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/indexes"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/metadata"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/objects"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/indexes"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/metadata"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/objects"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
 
 // DefaultVerifyType asserts that the type is not verified when
@@ -38,7 +39,7 @@ func DoNotVerifyTypes(s *Store) {
 }
 
 type Store struct {
-	cdc *codec.Codec
+	cdc codec.Marshaler
 
 	verifyType bool
 
@@ -47,7 +48,7 @@ type Store struct {
 	metadata metadata.Store
 }
 
-func NewStore(cdc *codec.Codec, db sdk.KVStore, pfx []byte, options ...OptionFunc) Store {
+func NewStore(cdc codec.Marshaler, db sdk.KVStore, pfx []byte, options ...OptionFunc) Store {
 	prefixedStore := prefix.NewStore(db, pfx)
 	s := Store{
 		cdc:        cdc,
@@ -139,17 +140,14 @@ func newFilter(primaryKeys [][]byte, store Store) *Cursor {
 type Cursor struct {
 	maxKeys  int
 	keyIndex int
-	valid    bool
 	keys     [][]byte
 	store    Store
 }
 
 func (c *Cursor) Next() {
-	if c.keyIndex+1 == c.maxKeys {
-		c.valid = false
-		return
+	if c.keyIndex < c.maxKeys {
+		c.keyIndex += 1
 	}
-	c.keyIndex += 1
 }
 
 func (c *Cursor) Read(o types.Object) error {
@@ -165,10 +163,7 @@ func (c *Cursor) Update(o types.Object) error {
 }
 
 func (c *Cursor) Valid() bool {
-	if len(c.keys) == 0 {
-		return false
-	}
-	return c.valid
+	return c.keyIndex < c.maxKeys
 }
 
 func (c *Cursor) currKey() []byte {

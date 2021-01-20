@@ -2,7 +2,7 @@ package indexes
 
 import (
 	"errors"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"math"
 	"reflect"
 	"testing"

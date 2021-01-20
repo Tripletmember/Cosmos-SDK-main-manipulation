@@ -2,8 +2,8 @@ package crud
 
 import (
 	"fmt"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
 
 type QueryStatement interface {

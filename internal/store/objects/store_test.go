@@ -2,10 +2,10 @@ package objects
 
 import (
 	"errors"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/test"
-	"reflect"
 	"testing"
+
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 )
 
 func TestStore(t *testing.T) {
@@ -22,13 +22,13 @@ func TestStore(t *testing.T) {
 			t.Fatal(err)
 		}
 		// test correct unmarshalling
-		var expected = test.Object{}
-		err = store.Read(obj.PrimaryKey(), &expected)
+		var expected = test.NewObject()
+		err = store.Read(obj.PrimaryKey(), expected)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !reflect.DeepEqual(obj, expected) {
-			t.Fatal("unexpected result")
+		if err := obj.Equals(expected); err != nil {
+			t.Fatal(err)
 		}
 		// test can't create object with same primary key twice
 		err = store.Create(obj)
@@ -43,16 +43,16 @@ func TestStore(t *testing.T) {
 			t.Fatal(err)
 		}
 		// test correct unmarshalling
-		var expected = test.Object{}
-		err = store.Read(obj.PrimaryKey(), &expected)
+		var expected = test.NewObject()
+		err = store.Read(obj.PrimaryKey(), expected)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !reflect.DeepEqual(obj, expected) {
-			t.Fatal("unexpected result")
+		if err := obj.Equals(expected); err != nil {
+			t.Fatal(err)
 		}
 		// test object not found
-		err = store.Read(test.NewRandomObject().PrimaryKey(), &expected)
+		err = store.Read(test.NewRandomObject().PrimaryKey(), expected)
 		if !errors.Is(err, types.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
@@ -75,13 +75,13 @@ func TestStore(t *testing.T) {
 			t.Fatal(err)
 		}
 		// check if it was updated correctly
-		var expected = test.Object{}
-		err = store.Read(obj.PrimaryKey(), &expected)
+		var expected = test.NewObject()
+		err = store.Read(obj.PrimaryKey(), expected)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !reflect.DeepEqual(expected, obj) {
-			t.Fatal("unexpected result")
+		if err := obj.Equals(expected); err != nil {
+			t.Fatal(err)
 		}
 	})
 
@@ -103,8 +103,8 @@ func TestStore(t *testing.T) {
 			t.Fatal(err)
 		}
 		// try to get object
-		var expected = test.Object{}
-		err = store.Read(obj.PrimaryKey(), &expected)
+		var expected = test.NewObject()
+		err = store.Read(obj.PrimaryKey(), expected)
 		if !errors.Is(err, types.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}

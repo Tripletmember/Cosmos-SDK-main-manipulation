@@ -2,10 +2,10 @@ package store
 
 import (
 	"errors"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/test"
-	"reflect"
 	"testing"
+
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 )
 
 func TestStore(t *testing.T) {
@@ -21,13 +21,13 @@ func TestStore(t *testing.T) {
 		t.Fatal(err)
 	}
 	// test read
-	var expected test.Object
-	err = s.Read(obj.PrimaryKey(), &expected)
+	var expected = test.NewObject()
+	err = s.Read(obj.PrimaryKey(), expected)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(expected, obj) {
-		t.Fatal("unexpected result")
+	if err := obj.Equals(expected); err != nil {
+		t.Fatal(err)
 	}
 	// test update
 	update := obj
@@ -36,12 +36,12 @@ func TestStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = s.Read(obj.PrimaryKey(), &expected)
+	err = s.Read(obj.PrimaryKey(), expected)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(update, expected) {
-		t.Fatal("unexpected result")
+	if err := update.Equals(expected); err != nil {
+		t.Fatal(err)
 	}
 	// test cursor
 	crs, err := s.Query([]types.SecondaryKey{
@@ -51,13 +51,13 @@ func TestStore(t *testing.T) {
 		t.Fatal(err)
 	}
 	// test read
-	err = crs.Read(&expected)
+	err = crs.Read(expected)
 	if err != nil {
 		t.Logf("%s", crs.currKey())
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(expected, update) {
-		t.Fatal("unexpected result")
+	if err := update.Equals(expected); err != nil {
+		t.Fatal(err)
 	}
 	// test update
 	update.TestSecondaryKeyA = []byte("another-update")
@@ -66,8 +66,8 @@ func TestStore(t *testing.T) {
 		t.Fatal(err)
 	}
 	expected.Reset()
-	err = crs.Read(&expected)
-	if !reflect.DeepEqual(expected, update) {
+	err = crs.Read(expected)
+	if err := update.Equals(expected); err != nil {
 		t.Fatal(err)
 	}
 	// test delete
@@ -75,7 +75,7 @@ func TestStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = crs.Read(&expected)
+	err = crs.Read(expected)
 	if !errors.Is(err, types.ErrNotFound) {
 		t.Fatal("unexpected error", err)
 	}

@@ -2,9 +2,10 @@ package crud
 
 import (
 	"errors"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store"
 )
 
 // errors mirroring internal crud's error
@@ -43,6 +44,8 @@ type SecondaryKey struct {
 
 // Object defines a structure that can be saved in the crud store
 type Object interface {
+	codec.ProtoMarshaler
+
 	// PrimaryKey is the unique id that identifies the object
 	PrimaryKey() []byte
 	// SecondaryKeys is an array containing the secondary keys
@@ -92,6 +95,6 @@ type Cursor interface {
 // NewStore instantiates a new store given the codec, a sdk.KVStore, a prefix
 // in which to store the data, and the optional options to customize the store
 // behaviour
-func NewStore(cdc *codec.Codec, db sdk.KVStore, prefix []byte, opts ...OptionFunc) Store {
+func NewStore(cdc codec.Marshaler, db sdk.KVStore, prefix []byte, opts ...OptionFunc) Store {
 	return storeWrapper{s: store.NewStore(cdc, db, prefix, toInternalOptions(opts)...)}
 }

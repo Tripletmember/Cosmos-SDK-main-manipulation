@@ -2,14 +2,17 @@ package test
 
 import (
 	"crypto/rand"
+	"fmt"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/codec"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
-	tmtypes "github.com/tendermint/tendermint/abci/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/tendermint/tendermint/libs/log"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	db "github.com/tendermint/tm-db"
-	"time"
 )
 
 // Key is the name of a test key
@@ -18,10 +21,10 @@ const IndexID_A = 0x0
 const IndexID_B = 0x1
 
 // assert types.Object is implemented by test Object
-var _ = types.Object(Object{})
+var _ = types.Object(NewObject())
 
 // NewStore builds a new store
-func NewStore() (sdk.KVStore, *codec.Codec, error) {
+func NewStore() (sdk.KVStore, codec.Marshaler, error) {
 	ctx, storeKey, cdc, err := New()
 	if err != nil {
 		return nil, nil, err
@@ -30,8 +33,13 @@ func NewStore() (sdk.KVStore, *codec.Codec, error) {
 }
 
 // New returns the objects necessary to run a test
-func New() (sdk.Context, sdk.StoreKey, *codec.Codec, error) {
-	testCdc := codec.New()
+func New() (sdk.Context, sdk.StoreKey, codec.Marshaler, error) {
+	interfaceRegistry := cdctypes.NewInterfaceRegistry()
+	interfaceRegistry.RegisterInterface("crud.internal.test",
+		(*types.Object)(nil),
+		&Object{},
+	)
+	testCdc := codec.NewProtoCodec(interfaceRegistry)
 	testKey := sdk.NewKVStoreKey(Key)
 	mdb := db.NewMemDB()
 	ms := store.NewCommitMultiStore(mdb)
@@ -40,7 +48,7 @@ func New() (sdk.Context, sdk.StoreKey, *codec.Codec, error) {
 	if err != nil {
 		return sdk.Context{}, nil, nil, err
 	}
-	testCtx := sdk.NewContext(ms, tmtypes.Header{Time: time.Now()}, true, log.NewNopLogger())
+	testCtx := sdk.NewContext(ms, tmproto.Header{Time: time.Now()}, true, log.NewNopLogger())
 	return testCtx, testKey, testCdc, nil
 }
 
@@ -49,9 +57,11 @@ func NewDeterministicObject() Object {
 	skA := []byte("secondary-key")
 	skB := []byte("secondary-key1")
 	return Object{
-		TestPrimaryKey:    pk,
-		TestSecondaryKeyA: skA,
-		TestSecondaryKeyB: skB,
+		&types.TestObject{
+			TestPrimaryKey:    pk,
+			TestSecondaryKeyA: skA,
+			TestSecondaryKeyB: skB,
+		},
 	}
 }
 
@@ -72,20 +82,23 @@ func NewRandomObject() Object {
 		panic(err)
 	}
 	return Object{
-		TestPrimaryKey:    pk,
-		TestSecondaryKeyA: skA,
-		TestSecondaryKeyB: append(skA, skB...),
+		&types.TestObject{
+			TestPrimaryKey:    pk,
+			TestSecondaryKeyA: skA,
+			TestSecondaryKeyB: append(skA, skB...),
+		},
 	}
 }
 
-// Object is a mock object used to test the store
 type Object struct {
-	// TestPrimaryKey is a primary key
-	TestPrimaryKey []byte
-	// TestSecondaryKeyA is secondary key number one
-	TestSecondaryKeyA []byte
-	// TestSecondaryKeyB is secondary key number two
-	TestSecondaryKeyB []byte
+	*types.TestObject
+}
+
+func NewObject() *Object {
+	testObject := types.TestObject{}
+	object := Object{&testObject}
+
+	return &object
 }
 
 func (o Object) PrimaryKey() (primaryKey []byte) {
@@ -119,8 +132,28 @@ func (o Object) SecondSecondaryKey() types.SecondaryKey {
 	}
 }
 
-func (o Object) Reset() {
-	o.TestSecondaryKeyA = nil
-	o.TestPrimaryKey = nil
-	o.TestSecondaryKeyB = nil
+func (this *Object) Equals(that *Object) error {
+	tester := func(a []uint8, b []uint8) error {
+		if len(a) != len(b) {
+			return fmt.Errorf("len(a) == %d != len(b) == %d", len(a), len(b))
+		}
+		for i, ai := range a {
+			if ai != b[i] {
+				return fmt.Errorf("a[%d] == %d != b[%d] == %d", i, ai, i, b[i])
+			}
+		}
+		return nil
+	}
+
+	if err := tester(this.TestPrimaryKey, that.TestPrimaryKey); err != nil {
+		return err
+	}
+	if err := tester(this.TestSecondaryKeyA, that.TestSecondaryKeyA); err != nil {
+		return err
+	}
+	if err := tester(this.TestSecondaryKeyB, that.TestSecondaryKeyB); err != nil {
+		return err
+	}
+
+	return nil
 }

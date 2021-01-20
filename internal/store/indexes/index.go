@@ -3,7 +3,7 @@ package indexes
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"math"
 )
 

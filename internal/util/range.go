@@ -26,14 +26,11 @@ func (r *Range) CheckAndMoveForward() (inRange bool, stopIter bool) {
 		return true, false
 	}
 	// check if we need to stop iterating
-	if r.index > r.end {
-		return false, true
-	}
-	// check if it's included
-	if r.index >= r.start && r.index <= r.end {
-		r.index += 1
-		return true, false
-	}
-	// not in range, but move forward
-	return false, false
+	stopIter = r.index >= r.end
+	// check if we're in range
+	inRange = r.index >= r.start
+	// always bump index...
+	r.index++
+	// ...before returning
+	return inRange, stopIter
 }

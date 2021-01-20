@@ -2,9 +2,10 @@ package indexes
 
 import (
 	"fmt"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/util"
 	"sort"
+
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/util"
 )
 
 func (s Store) Filter(secondaryKeys []types.SecondaryKey, start, end uint64) ([][]byte, error) {
@@ -16,9 +17,9 @@ func (s Store) Filter(secondaryKeys []types.SecondaryKey, start, end uint64) ([]
 	var sets []util.ByteSet
 	for _, sk := range secondaryKeys {
 		set := util.NewByteSet()
-		err := s.Query(sk, 0, 0, func(primaryKey []byte) (stop bool) {
+		err := s.Query(sk, 0, 0, func(primaryKey []byte) (keepGoing bool) {
 			set.Insert(primaryKey)
-			return false
+			return true
 		})
 		if err != nil {
 			return nil, err

@@ -2,11 +2,12 @@ package indexes
 
 import (
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/store/types"
-	"github.com/fdymylja/cosmos-sdk-oodb/internal/util"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/util"
 )
 
 // experimentalFiltering defines if to use the experimental filtering function or not
@@ -23,7 +24,7 @@ const primaryKeysToIndexPrefix = 0x1
 // index values
 type Store struct {
 	// codec serves the purpose of encoding and decoding objects
-	cdc *codec.Codec // TODO get rid of the codec?
+	cdc codec.Marshaler // TODO get rid of the codec?
 	// indexes maps secondary keys to their primary keys
 	// index and primary keys are stored using the following pattern
 	// the index key is composed as
@@ -54,7 +55,7 @@ type Store struct {
 // and the other which maps a primary key to its respective index key
 // for a more straight forward delete of indexes which does not require
 // acquiring the objects current state when indexes are updated.
-func NewStore(cdc *codec.Codec, db sdk.KVStore) Store {
+func NewStore(cdc codec.Marshaler, db sdk.KVStore) Store {
 	return Store{
 		cdc:                cdc,
 		indexes:            prefix.NewStore(db, []byte{indexesPrefix}),
@@ -128,12 +129,12 @@ func (s Store) QueryAll(sk types.SecondaryKey) (primaryKeys [][]byte, err error)
 // exact part of the index which we want to query, to query the whole index domain just put start and
 // end as 0 the primary keys found will be passed to the 'do' function, if 'do' returns false, the
 // iteration is stopped.
-func (s Store) Query(sk types.SecondaryKey, start, end uint64, do func(primaryKey []byte) (stop bool)) error {
+func (s Store) Query(sk types.SecondaryKey, start, end uint64, do func(primaryKey []byte) (keepGoing bool)) error {
 	return s.getPrimaryKeysFromIndex(sk, start, end, do)
 }
 
 // getPrimaryKeysFromIndex gets all the primary keys from the given start-end range
-// start and end are inclusive, error is returned only in case the provided secondary key is invalid
+// start is inclusive, end is exclusive, error is returned only in case the provided secondary key is invalid
 func (s Store) getPrimaryKeysFromIndex(sk types.SecondaryKey, start uint64, end uint64, do func(primaryKey []byte) (stop bool)) error {
 	store, _, err := s.kvStore(sk)
 	if err != nil {
@@ -206,11 +207,6 @@ func (s Store) kvStoreRaw(encodedKey []byte) sdk.KVStore {
 	return prefix.NewStore(s.indexes, encodedKey)
 }
 
-// indexList is used to store index list data in the KVStore
-type indexList struct {
-	Indexes [][]byte
-}
-
 // saveIndexList stores the encoded secondary keys the primary key
 // is using, so in case the object needs to be updated or deleted
 // it's fairly easy to understand which secondary keys point to it
@@ -219,7 +215,7 @@ func (s Store) saveIndexList(primaryKey []byte, encodedKeys [][]byte) error {
 	// sort keys deterministically
 	util.SortByteSlice(encodedKeys)
 	// marshal index list
-	b, err := s.cdc.MarshalBinaryLengthPrefixed(&indexList{Indexes: encodedKeys})
+	b, err := s.cdc.MarshalBinaryLengthPrefixed(&types.IndexList{Indexes: encodedKeys})
 	if err != nil {
 		return err
 	}
@@ -246,7 +242,7 @@ func (s Store) getIndexList(primaryKey []byte) (indexes [][]byte, err error) {
 	if b == nil {
 		return nil, fmt.Errorf("%w: key %x not found in index list store", types.ErrNotFound, primaryKey)
 	}
-	list := new(indexList)
+	list := new(types.IndexList)
 	err = s.cdc.UnmarshalBinaryLengthPrefixed(b, list)
 	if err != nil {
 		return nil, fmt.Errorf("%w: unable to unmarshal: %s", types.ErrInternal, err.Error())

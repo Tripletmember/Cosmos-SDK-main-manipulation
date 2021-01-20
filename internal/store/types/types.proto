@@ -1,0 +1,15 @@
+syntax="proto3";
+package cosmosSdkCrud.internal.store.types.v1beta1;
+
+import "gogoproto/gogo.proto";
+
+option go_package="github.com/iov-one/cosmos-sdk-crud/internal/store/types";
+
+
+// indexList
+message indexList {
+   // Indexes
+   repeated bytes indexes = 1 [
+       (gogoproto.moretags) = "yaml:\"indexes\""
+   ];
+}
