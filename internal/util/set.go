@@ -1,36 +1,31 @@
 package util
 
-import "fmt"
-
 func hash(b []byte) string {
-	return fmt.Sprintf("%x", b)
+	return string(b)
 }
 
 type ByteSet struct {
-	set  map[string]struct{}
 	keys map[string][]byte
 }
 
 func NewByteSet() ByteSet {
 	return ByteSet{
-		set:  make(map[string]struct{}),
 		keys: make(map[string][]byte),
 	}
 }
 
 func (s ByteSet) Insert(b []byte) {
 	h := hash(b)
-	s.set[h] = struct{}{}
 	s.keys[h] = b
 }
 
 func (s ByteSet) Has(b []byte) (ok bool) {
-	_, ok = s.set[hash(b)]
+	_, ok = s.keys[hash(b)]
 	return ok
 }
 
 func (s ByteSet) Len() int {
-	return len(s.set)
+	return len(s.keys)
 }
 
 func (s ByteSet) Range() [][]byte {
