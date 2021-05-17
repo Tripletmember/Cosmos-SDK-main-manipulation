@@ -56,9 +56,9 @@ func TestRange(t *testing.T) {
 		checkErr(t, err)
 
 		for i := 0; i < 3; i++ {
-			inRange, stopIter := r.CheckAndMoveForward()
-			if inRange || !stopIter {
-				t.Fatal("Range have not yet begun")
+			inRange, _ := r.CheckAndMoveForward()
+			if inRange {
+				t.Fatal("Range should not have begun")
 			}
 		}
 
@@ -78,17 +78,15 @@ func TestRange(t *testing.T) {
 	})
 
 	t.Run("empty range", func (t *testing.T) {
-		r, err := NewRange(1, 1)
-		checkErr(t, err)
-
-		inRange, stop := r.CheckAndMoveForward()
-		if inRange || ! stop {
-			t.Fatal("An empty range should not contain any element")
+		_, err := NewRange(1, 1)
+		if ! errors.Is(err, errBadRange) {
+			t.Fatal("Unexpected error : ", err)
 		}
+
 	})
 
 	t.Run("single element range", func (t *testing.T) {
-		r, err := NewRange(5, 6)
+		r, err := NewRange(0, 1)
 		checkErr(t, err)
 
 		inRange, stop := r.CheckAndMoveForward()
