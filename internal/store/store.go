@@ -167,5 +167,6 @@ func (c *Cursor) Valid() bool {
 }
 
 func (c *Cursor) currKey() []byte {
+	// FIXME : this could fail if an user call Next() past the last key, without checking if the cursor is valid
 	return c.keys[c.keyIndex]
 }

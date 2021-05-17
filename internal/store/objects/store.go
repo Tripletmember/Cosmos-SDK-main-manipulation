@@ -38,6 +38,7 @@ func (s Store) Create(o types.Object) error {
 // fails if it does not exist, or if unmarshalling fails
 // the types.Object must be a pointer
 func (s Store) Read(pk []byte, o types.Object) error {
+
 	b := s.db.Get(pk)
 	// if nil we assume it was not found
 	if b == nil {
@@ -53,6 +54,8 @@ func (s Store) Read(pk []byte, o types.Object) error {
 // Update updates the given object, fails if it does not exist
 // or if marshalling fails
 func (s Store) Update(o types.Object) error {
+	// TODO: Could an user alter the primary key of an object ? If this is the case,
+	// update semantics are quite strange
 	pk := o.PrimaryKey()
 	if !s.db.Has(pk) {
 		return fmt.Errorf("%w: primary key %x", types.ErrNotFound, pk)

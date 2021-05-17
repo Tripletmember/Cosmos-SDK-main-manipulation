@@ -10,8 +10,8 @@ import (
 // maxKeyLength defines the index key maximum length in bytes
 const maxKeyLength = math.MaxUint16
 
-// lengthInBytes defines the bytes required to express the length of a key
-const lengthInBytes = 2
+// numBytesKeyLength defines the bytes required to express the length of a key
+const numBytesKeyLength = 2
 
 // encodeIndexKey takes a types.SecondaryKEy and encodes it
 // the way in which it's encoded is the following
@@ -30,7 +30,7 @@ func encodeIndexKey(sk types.SecondaryKey) ([]byte, error) {
 	if length > maxKeyLength {
 		return nil, fmt.Errorf("%w: index keys bigger than %d bytes are not allowed, got: %d", types.ErrBadArgument, maxKeyLength, length)
 	}
-	encodedLength := make([]byte, 2)
+	encodedLength := make([]byte, numBytesKeyLength)
 	binary.LittleEndian.PutUint16(encodedLength, uint16(length))
 	finalKey := append([]byte{sk.ID}, encodedLength...)
 	return append(finalKey, sk.Value...), nil
@@ -45,7 +45,7 @@ func encodeIndexKey(sk types.SecondaryKey) ([]byte, error) {
 func decodeIndexKey(key []byte) (sk types.SecondaryKey, err error) {
 	// minimumKeyLength defines the minimum length a key has to have
 	// to be converted into a secondary key
-	const minimumKeyLength = lengthInBytes + 1 + 1
+	const minimumKeyLength = numBytesKeyLength + 1 + 1
 	// sanity checks
 	length := len(key)
 	if length < minimumKeyLength {

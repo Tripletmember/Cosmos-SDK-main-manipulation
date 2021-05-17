@@ -27,6 +27,7 @@ func (s Store) Filter(secondaryKeys []types.SecondaryKey, start, end uint64) ([]
 		sets = append(sets, set)
 	}
 	// filter and find common primary keys
+	// FIXME: returns nil and not an empty slice on empty result set
 	return findCommon(sets, rng), nil
 }
 

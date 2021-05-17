@@ -157,6 +157,7 @@ func (s Store) getPrimaryKeysFromIndex(sk types.SecondaryKey, start uint64, end 
 			break
 		}
 	}
+	// TODO: check iter.Close() status here
 	iter.Close()
 	return nil
 }
