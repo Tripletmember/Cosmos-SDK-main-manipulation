@@ -64,6 +64,40 @@ func Test_query(t *testing.T) {
 			t.Fatal("unexpected result")
 		}
 	})
+
+	t.Run("success/empty equality", func(t *testing.T) {
+		q := newQuery(crudStore)
+		_, err = q.Where().Index(0x0).Equals([]byte("")).Do()
+		if err != nil {
+			t.Fatal(err)
+		}
+		expected := &query{
+			errs: nil,
+			andEqualSk: map[byte]struct{}{
+				0x0: {},
+			},
+			sks: []types.SecondaryKey{
+				{
+					ID:    0x0,
+					Value: []byte(""),
+				},
+			},
+			currSk: types.SecondaryKey{
+				ID:    0x0,
+				Value: []byte(""),
+			},
+			store:    crudStore,
+			start:    0,
+			end:      0,
+			consumed: true,
+		}
+
+		if !reflect.DeepEqual(expected, q) {
+			t.Logf("%#v", expected)
+			t.Logf("%#v", q)
+			t.Fatal("unexpected result")
+		}
+	})
 	t.Run("bad argument/already consumed", func(t *testing.T) {
 		_, _ = q.Do() // do it twice in case we run this subtest only!
 		_, err := q.Do()
@@ -73,7 +107,7 @@ func Test_query(t *testing.T) {
 		}
 	})
 	t.Run("bad argument/no secondary keys", func(t *testing.T) {
-		q := newQuery(store.Store{})
+		q := newQuery(crudStore)
 		_, err := q.Do()
 		t.Logf("%s", err)
 		if !errors.Is(err, ErrBadArgument) {
@@ -81,7 +115,7 @@ func Test_query(t *testing.T) {
 		}
 	})
 	t.Run("bad argument/multiple indexes with same id", func(t *testing.T) {
-		q := newQuery(store.Store{})
+		q := newQuery(crudStore)
 		q.Where().Index(0x1).Equals([]byte("1")).And().Index(0x1).Equals([]byte{0x1})
 		_, err := q.Do()
 		t.Logf("%s", err)
@@ -90,7 +124,7 @@ func Test_query(t *testing.T) {
 		}
 	})
 	t.Run("bad argument/nil equality", func(t *testing.T) {
-		q := newQuery(store.Store{})
+		q := newQuery(crudStore)
 		q.Where().Index(0x1).Equals(nil)
 		_, err := q.Do()
 		t.Logf("%s", err)
@@ -98,4 +132,5 @@ func Test_query(t *testing.T) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 	})
+
 }
