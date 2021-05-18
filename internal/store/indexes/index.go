@@ -23,6 +23,8 @@ const numBytesKeyLength = 2
 // if we wanted to iterate over index keyA we would end up in keyB domain too
 // as keyB has, as prefix, keyA. In order to avoid this we encode keys using
 // the strategy highlighted above.
+// This functions treats a nil secondary key value as an empty value, and thus a nil value will be transformed into
+// an empty byte array through encode-decode
 // Error types are of types.ErrBadArgument, and happen when
 // the representation of the length of the index key takes more than 2 bytes (uint16).
 func encodeIndexKey(sk types.SecondaryKey) ([]byte, error) {
@@ -45,20 +47,20 @@ func encodeIndexKey(sk types.SecondaryKey) ([]byte, error) {
 func decodeIndexKey(key []byte) (sk types.SecondaryKey, err error) {
 	// minimumKeyLength defines the minimum length a key has to have
 	// to be converted into a secondary key
-	const minimumKeyLength = numBytesKeyLength + 1 + 1
+	const metadataLength = numBytesKeyLength + 1
 	// sanity checks
 	length := len(key)
-	if length < minimumKeyLength {
-		return sk, fmt.Errorf("%w: minimum length not reached, got: %d, want: %d", types.ErrInternal, len(key), minimumKeyLength)
+	if length < metadataLength {
+		return sk, fmt.Errorf("%w: minimum length not reached, got: %d, want: %d", types.ErrInternal, len(key), metadataLength)
 	}
 	decodedLength := binary.LittleEndian.Uint16(key[1:3])
-	valueLength := length - minimumKeyLength + 1
+	valueLength := length - metadataLength
 	if int(decodedLength) != valueLength {
 		return sk, fmt.Errorf("%w, mismatch in length, decoded: %d, got: %d", types.ErrInternal, decodedLength, valueLength)
 	}
 	// create secondary key
-	value := make([]byte, length-minimumKeyLength+1)
-	copy(value, key[minimumKeyLength-1:])
+	value := make([]byte, length - metadataLength)
+	copy(value, key[metadataLength:])
 	return types.SecondaryKey{
 		ID:    key[0],
 		Value: value,
