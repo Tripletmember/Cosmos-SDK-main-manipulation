@@ -22,7 +22,7 @@ func TestStore(t *testing.T) {
 			t.Fatal(err)
 		}
 		// test correct unmarshalling
-		checkObject(t, store, obj)
+		checkObject(t, &store, &obj)
 
 		// test can't create object with same primary key twice
 		err = store.Create(obj)
@@ -37,12 +37,12 @@ func TestStore(t *testing.T) {
 			t.Fatal(err)
 		}
 		// test correct unmarshalling
-		checkObject(t, store, obj)
+		checkObject(t, &store, &obj)
 
 		// test object not found with mutated key
 
 		var expected test.Object
-		err = store.Read(mutateBytes(obj.PrimaryKey()), expected)
+		err = store.Read(test.MutateBytes(obj.PrimaryKey()), expected)
 		if !errors.Is(err, types.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
@@ -84,7 +84,7 @@ func TestStore(t *testing.T) {
 		}
 
 		// check if everything is still ok
-		checkObject(t, store, obj)
+		checkObject(t, &store, &obj)
 
 		obj.TestSecondaryKeyA = []byte("test2")
 		err = store.Update(obj)
@@ -92,7 +92,7 @@ func TestStore(t *testing.T) {
 			t.Fatal(err)
 		}
 		// check if it was updated correctly
-		checkObject(t, store, obj)
+		checkObject(t, &store, &obj)
 	})
 
 	t.Run("delete", func(t *testing.T) {
@@ -108,7 +108,7 @@ func TestStore(t *testing.T) {
 			t.Fatal(err)
 		}
 		// delete non existing object
-		err = store.Delete(mutateBytes(obj.PrimaryKey()))
+		err = store.Delete(test.MutateBytes(obj.PrimaryKey()))
 		if !errors.Is(err, types.ErrNotFound){
 			t.Fatal("unexpected error", err)
 		}
@@ -128,23 +128,14 @@ func TestStore(t *testing.T) {
 }
 
 // Helpers functions for testing
-func mutateBytes(originalBytes []byte) (mutatedBytes []byte)  {
-	if originalBytes != nil {
-		mutatedBytes = make([]byte, len(originalBytes))
-		copy(mutatedBytes, originalBytes)
-		mutatedBytes[len(mutatedBytes)-1] += 1
-	}
-	return
-}
-
-func checkObject(t *testing.T, store Store, expected test.Object) {
+func checkObject(t *testing.T, store *Store, expected *test.Object) {
 
 	var actual = test.NewObject()
 	var err = store.Read(expected.PrimaryKey(), actual)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := actual.Equals(&expected); err != nil {
+	if err := actual.Equals(expected); err != nil {
 		t.Fatal(err)
 	}
 }

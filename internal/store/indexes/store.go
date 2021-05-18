@@ -114,6 +114,7 @@ func (s Store) Delete(primaryKey []byte) error {
 // QueryAll will return all the primary keys contained in an index, be careful
 // as it will load all primary keys in memory, generally speaking Query is suggested
 // for wide index queries.
+// Does not return an error if no result is found
 func (s Store) QueryAll(sk types.SecondaryKey) (primaryKeys [][]byte, err error) {
 	err = s.Query(sk, 0, 0, func(primaryKey []byte) (stop bool) {
 		primaryKeys = append(primaryKeys, primaryKey)
@@ -129,12 +130,14 @@ func (s Store) QueryAll(sk types.SecondaryKey) (primaryKeys [][]byte, err error)
 // exact part of the index which we want to query, to query the whole index domain just put start and
 // end as 0 the primary keys found will be passed to the 'do' function, if 'do' returns false, the
 // iteration is stopped.
+// Does not return an error if no result is found
 func (s Store) Query(sk types.SecondaryKey, start, end uint64, do func(primaryKey []byte) (keepGoing bool)) error {
 	return s.getPrimaryKeysFromIndex(sk, start, end, do)
 }
 
 // getPrimaryKeysFromIndex gets all the primary keys from the given start-end range
 // start is inclusive, end is exclusive, error is returned only in case the provided secondary key is invalid
+// Does not return an error if no result is found
 func (s Store) getPrimaryKeysFromIndex(sk types.SecondaryKey, start uint64, end uint64, do func(primaryKey []byte) (stop bool)) error {
 	store, _, err := s.kvStore(sk)
 	if err != nil {

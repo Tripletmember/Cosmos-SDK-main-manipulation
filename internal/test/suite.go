@@ -52,12 +52,22 @@ func New() (sdk.Context, sdk.StoreKey, codec.Marshaler, error) {
 	return testCtx, testKey, testCdc, nil
 }
 
+func NewCustomObject(pk, sk1, sk2 string) Object {
+	return Object{
+		TestObject: &types.TestObject{
+			TestPrimaryKey:    []byte(pk),
+			TestSecondaryKeyA: []byte(sk1),
+			TestSecondaryKeyB: []byte(sk2),
+		},
+	}
+}
+
 func NewDeterministicObject() Object {
 	pk := []byte("primary-key")
 	skA := []byte("secondary-key")
 	skB := []byte("secondary-key1")
 	return Object{
-		&types.TestObject{
+		TestObject: &types.TestObject{
 			TestPrimaryKey:    pk,
 			TestSecondaryKeyA: skA,
 			TestSecondaryKeyB: skB,
@@ -156,4 +166,14 @@ func (this *Object) Equals(that *Object) error {
 	}
 
 	return nil
+}
+
+
+func MutateBytes(originalBytes []byte) (mutatedBytes []byte)  {
+	if originalBytes != nil {
+		mutatedBytes = make([]byte, len(originalBytes))
+		copy(mutatedBytes, originalBytes)
+		mutatedBytes[len(mutatedBytes)-1] += 1
+	}
+	return
 }

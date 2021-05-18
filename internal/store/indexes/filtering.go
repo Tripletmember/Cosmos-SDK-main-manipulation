@@ -27,7 +27,6 @@ func (s Store) Filter(secondaryKeys []types.SecondaryKey, start, end uint64) ([]
 		sets = append(sets, set)
 	}
 	// filter and find common primary keys
-	// FIXME: returns nil and not an empty slice on empty result set
 	return findCommon(sets, rng), nil
 }
 
@@ -36,7 +35,7 @@ func findCommon(sets []util.ByteSet, rng *util.Range) [][]byte {
 	sort.Slice(sets, func(i, j int) bool {
 		return sets[i].Len() < sets[j].Len()
 	})
-	var pks [][]byte
+	pks := make([][]byte, 0)
 	for _, k := range sets[0].Range() {
 		if !isInAll(k, sets[1:]) {
 			continue
