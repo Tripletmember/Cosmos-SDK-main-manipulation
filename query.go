@@ -59,10 +59,6 @@ func (q *query) Do() (Cursor, error) {
 	if len(q.errs) != 0 {
 		return nil, q.errs[0]
 	}
-	// check if query has something to query
-	if len(q.sks) == 0 {
-		return nil, fmt.Errorf("%w: no secondary keys supplied to query", ErrBadArgument)
-	}
 	// check if query was already run
 	if q.consumed {
 		return nil, fmt.Errorf("%w: query already consumed", ErrBadArgument)
