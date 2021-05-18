@@ -4,9 +4,8 @@ import "fmt"
 
 var errBadRange = fmt.Errorf("specified range is not good")
 
-//FIXME: what should be semantic of range arguments ? Currently, only (0,0) args represent an infinite range;
-// but what if we want [3, +inf[ ? I think we should either forbid infinite ranges
-// or add a specific flag (because a [0, 0] range could be expected to be empty and is misleading)
+// NewRange Create a new range [start, end[. Empty range are not allowed. The special value 0 for the end index
+// represents a never-ending range
 func NewRange(start, end uint64) (*Range, error) {
 	// Empty ranges are forbidden (but when end equals 0, this is not an empty but an infinite range)
 	if end != 0 && start >= end {
@@ -24,6 +23,9 @@ type Range struct {
 	index      uint64
 }
 
+// CheckAndMoveForward Returns current range status and moves the internal iterator forward
+// inRange is true if the iterator is in the range [start, end[
+// stopIter is true if the iterator reached the end of the interval
 func (r *Range) CheckAndMoveForward() (inRange bool, stopIter bool) {
 	// check if we need to stop iterating, thus if we reached the end
 	// If end == 0, then the range is infinite and should never stop iterating
