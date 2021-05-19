@@ -22,13 +22,23 @@ before_script:
   - set -eo pipefail
   - go get -u golang.org/x/tools/cmd/goimports
 script:
-  # We could merge the two commands behind for efficiency, but it would give less comprehensive errors
+  # We could merge the two commands below for efficiency, but it would give less comprehensive errors
   # Check files syntax and basic formatting
-  - echo "Files with syntax or formatting errors :"
-  - find . -name "*.go" -execdir gofmt -l -s '{}' \+
-  # Check files formatting, including imports
-  - echo "Files with formatting errors :"
-  - find . -name "*.go" -execdir goimports -l '{}' \+
+  - function checkEmpty() \
+    if [ -n "$1" ] ; \
+    then \
+      echo -e "\nFiles with syntax or formatting errors ($ERR_FILES)\n"; \
+      return 1; \
+    fi \
+    }
+  # If a syntax error occurs, the following command fails
+  - ERR_FILES=`find . -name "*.go" -execdir gofmt -l -s '{}' \+`
+  # Then check formatting errors
+  - checkEmpty "$ERR_FILES"
+  # Check advanced files formatting, including imports
+  - ERR_FILES=`find . -name "*.go" -execdir goimports -l '{}' \+`
+  - checkEmpty "$ERR_FILES"
+
   # Run the test suite
   - go test -v ./...
 
