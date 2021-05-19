@@ -1,8 +1,13 @@
 package objects
 
 import (
+	"bytes"
 	"errors"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/iov-one/cosmos-sdk-crud/internal/test"
@@ -109,4 +114,58 @@ func TestStore(t *testing.T) {
 			t.Fatal("unexpected error", err)
 		}
 	})
+
+	t.Run("get all key", func(t *testing.T) {
+		store, objs := createStoreWithRandomObjects(cdc, db, t, 10, "allkey")
+
+		actual, err := store.GetAllKeys(0, 0)
+		if err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		checkKeys(t, actual, objs)
+	})
+
+	t.Run("get key range", func(t *testing.T) {
+		store, objs := createStoreWithRandomObjects(cdc, db, t, 10, "keyrange")
+
+		//TODO: uncomment this test when merging with the newer version of Range
+		/*actual, err := store.GetAllKeys(5, 0)
+		if err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		checkKeys(t, actual, objs[5:])*/
+
+		actual, err := store.GetAllKeys(5, 7)
+		if err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		checkKeys(t, actual, objs[5:7])
+
+		actual, err = store.GetAllKeys(2, 12)
+		if err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		checkKeys(t, actual, objs[2:])
+	})
+}
+
+func checkKeys(t *testing.T, actual [][]byte, objects []types.Object) {
+	if len(actual) != len(objects) {
+		t.Fatalf("Result set length mismatch : actual = %v, expected = %v", len(actual), len(objects))
+	}
+
+	for i := 0; i < len(actual); i++ {
+		expected := objects[i].PrimaryKey()
+		if !bytes.Equal(actual[i], expected) {
+			t.Fatalf("Invalid key at position %v : actual = %v, expected = %v", i, actual[i], expected)
+		}
+	}
+}
+
+func createStoreWithRandomObjects(cdc codec.Marshaler, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []types.Object) {
+	store := NewStore(cdc, prefix.NewStore(db, []byte(uniqueID)))
+	addToStore := func(obj types.Object) error {
+		return store.Create(obj)
+	}
+	return store, test.CreateRandomObjects(addToStore, t, n)
 }

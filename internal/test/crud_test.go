@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 	"testing"
@@ -146,6 +147,34 @@ func Test_Starname(t *testing.T) {
 	t.Run("success on primary key", func(t *testing.T) {
 		// TODO
 	})
+
+	t.Run("success on select all", func(t *testing.T) {
+		cursor, err := store.Query().Do()
+		if err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+
+		for i, expected := range starnames {
+			if !cursor.Valid() {
+				t.Fatal("got less than expected, expected length is", len(starnames), "data ended at index", i)
+			}
+
+			actual := NewTestStarname("", "", "")
+			if err := cursor.Read(actual); err != nil {
+				t.Fatal("Unexpected error :", err)
+			}
+
+			if !reflect.DeepEqual(actual, expected) {
+				t.Fatalf("Starname mismatch, expected %v, got %v", expected, actual)
+			}
+			cursor.Next()
+		}
+
+		if cursor.Valid() {
+			t.Fatal("Got more results than expected")
+		}
+	})
+
 	t.Run("success on un-ranged owned accounts", func(t *testing.T) {
 		for _, owner := range owners {
 			cursor, err := store.Query().Where().Index(starnameOwnerIndex).Equals([]byte(owner)).Do()
