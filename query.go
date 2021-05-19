@@ -6,7 +6,13 @@ import (
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
 
+type ValidQuery interface {
+	WithRange() RangeStatement
+	Do() (Cursor, error)
+}
+
 type QueryStatement interface {
+	ValidQuery
 	Where() WhereStatement
 }
 
@@ -27,9 +33,8 @@ type RangeEndStatement interface {
 }
 
 type FinalizedIndexStatement interface {
+	ValidQuery
 	And() WhereStatement
-	WithRange() RangeStatement
-	Do() (Cursor, error)
 }
 
 func newQuery(s store.Store) *query {
