@@ -24,12 +24,12 @@ before_script:
 script:
   # We could merge the two commands below for efficiency, but it would give less comprehensive errors
   # Check files syntax and basic formatting
-  - function checkEmpty() \
-    if [ -n "$1" ] ; \
-    then \
-      echo -e "\nFiles with syntax or formatting errors ($ERR_FILES)\n"; \
-      return 1; \
-    fi \
+  - function checkEmpty()
+    if [ -n "$1" ] ;
+    then
+      echo -e "\nFiles with syntax or formatting errors ($ERR_FILES)\n";
+      return 1;
+    fi
     }
   # If a syntax error occurs, the following command fails
   - ERR_FILES=`find . -name "*.go" -execdir gofmt -l -s '{}' \+`
