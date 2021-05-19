@@ -10,36 +10,44 @@ import (
 
 // NewStore is Store's constructor
 func NewStore(cdc codec.Marshaler, db sdk.KVStore) Store {
+	ctr := Counter{}
 	return Store{
 		db:  db,
 		cdc: cdc,
+		objects: &ctr,
 	}
+}
+type Counter struct {
+	count uint64
 }
 
 // Store builds an object store
 type Store struct {
 	db     sdk.KVStore
 	cdc    codec.Marshaler
-	numObj uint64
+	// This has to be a reference in order to persist between calls
+	// Otherwise, if we want to use a simple uint64,
+	// we must switch to pointer receiver and pointer storage in struct (or use it through an interface)
+	objects* Counter
 }
 
 // Create creates the object in the store
 // returns an error if it already exists
 // or if marshalling fails
-func (s *Store) Create(o types.Object) error {
+func (s Store) Create(o types.Object) error {
 	pk := o.PrimaryKey()
 	if s.db.Has(pk) {
 		return fmt.Errorf("%w: primary key %x", types.ErrAlreadyExists, pk)
 	}
 	err := s.set(pk, o)
-	s.numObj++
+	s.objects.count++
 	return err
 }
 
 // Store retrieves the object given its primary key
 // fails if it does not exist, or if unmarshalling fails
 // the types.Object must be a pointer
-func (s *Store) Read(pk []byte, o types.Object) error {
+func (s Store) Read(pk []byte, o types.Object) error {
 	b := s.db.Get(pk)
 	// if nil we assume it was not found
 	if b == nil {
@@ -54,7 +62,7 @@ func (s *Store) Read(pk []byte, o types.Object) error {
 
 // Update updates the given object, fails if it does not exist
 // or if marshalling fails
-func (s *Store) Update(o types.Object) error {
+func (s Store) Update(o types.Object) error {
 	pk := o.PrimaryKey()
 	if !s.db.Has(pk) {
 		return fmt.Errorf("%w: primary key %x", types.ErrNotFound, pk)
@@ -68,29 +76,29 @@ func (s *Store) Update(o types.Object) error {
 
 // Delete deletes an object given its primary key
 // fails if the object does not exist
-func (s *Store) Delete(primaryKey []byte) error {
+func (s Store) Delete(primaryKey []byte) error {
 	if !s.db.Has(primaryKey) {
 		return fmt.Errorf("%w: primary key %x", types.ErrNotFound, primaryKey)
 	}
 	s.db.Delete(primaryKey)
-	s.numObj--
+	s.objects.count--
 	return nil
 }
 
 // GetAllKeys returns a slice containing the primary key of all the objects present in the store
 // in the interval [start, end[ and in ascending order.
 // Returns an error if the iterator cannot be closed
-func (s *Store) GetAllKeys(start, end uint64) ([][]byte, error) {
+func (s Store) GetAllKeys(start, end uint64) ([][]byte, error) {
 	// We could use append but it has to reallocate each time its capacity is reached
 	// Tracking the number of objects on the store is more efficient
 
 	// If the start offset is superior to the number of element, we can skip directly
-	if start >= s.numObj {
+	if start >= s.objects.count {
 		return make([][]byte, 0), nil
 	}
 
 	// The maximum size of the result set is the number of objects minus the start offset
-	var size = s.numObj - start
+	var size = s.objects.count - start
 	// If the range is finite, the actual size is the queried length, with a maximum of the previously computed length
 	if end != 0 {
 		size = util.Uint64Min(end-start, size)
@@ -125,7 +133,7 @@ func (s *Store) GetAllKeys(start, end uint64) ([][]byte, error) {
 
 // set takes care of doing object marshalling
 // and setting it in the store
-func (s *Store) set(key []byte, o codec.ProtoMarshaler) error {
+func (s Store) set(key []byte, o codec.ProtoMarshaler) error {
 	b, err := s.cdc.MarshalBinaryLengthPrefixed(o)
 	if err != nil {
 		return err
