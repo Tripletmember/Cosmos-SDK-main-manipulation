@@ -19,8 +19,10 @@ env:
     - GO111MODULE=on
     - GORACE="halt_on_error=1"
 
-script:
+before_script:
   - set -eo pipefail
+  - go get -u golang.org/x/tools/cmd/goimports
+script:
   # We could merge the two commands behind for efficiency, but it would give less comprehensive errors
   # Check files syntax and basic formatting
   - echo "Files with syntax or formatting errors :"
