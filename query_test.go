@@ -66,7 +66,7 @@ func Test_query(t *testing.T) {
 	})
 
 	t.Run("success/no secondary keys", func(t *testing.T) {
-		q := newQuery(store.Store{})
+		q := newQuery(crudStore)
 		_, err := q.Do()
 		t.Logf("%s", err)
 		if err != nil {

@@ -98,12 +98,12 @@ func TestStore(t *testing.T) {
 			if i == len(objs) {
 				t.Fatalf("Length mismatch, exepected %v elements but got more", len(objs))
 			}
-			var actual types.Object
-			if err := results.Read(actual); err != nil {
+			var actual = test.NewObject()
+			if err := results.Read(*actual); err != nil {
 				t.Fatal("Unexpected error :", err)
 			}
-			if !reflect.DeepEqual(actual, objs[i]) {
-				t.Fatalf("Object mismatch at index %v : expected = %v, actual = %v", i, objs[i], actual)
+			if !reflect.DeepEqual(*actual, objs[i]) {
+				t.Fatalf("Object mismatch at index %v : expected = %v(%[2]T), actual = %v(%[3]T)", i, objs[i], actual)
 			}
 			i++
 		}
