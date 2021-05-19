@@ -144,6 +144,8 @@ func (s Store) getPrimaryKeysFromIndex(sk types.SecondaryKey, start uint64, end 
 		return err
 	}
 	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
 	rng, err := util.NewRange(start, end)
 	if err != nil {
 		return fmt.Errorf("%w: %s", types.ErrBadArgument, err)
@@ -160,8 +162,6 @@ func (s Store) getPrimaryKeysFromIndex(sk types.SecondaryKey, start uint64, end 
 			break
 		}
 	}
-	// TODO: check iter.Close() status here
-	iter.Close()
 	return nil
 }
 

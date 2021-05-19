@@ -31,7 +31,6 @@ func Test_filtering(t *testing.T) {
 	err = store.Index(test.NewCustomObject("pk6", "a4", "b3"))
 	checkError(t, err)
 
-	//TODO: what should be the result ? Error, empty set or full set ?
 	/*t.Run("empty sk set", func(t *testing.T) {
 		pks, err := store.Filter(make([]types.SecondaryKey, 0), 0, 0)
 		checkError(t, err)

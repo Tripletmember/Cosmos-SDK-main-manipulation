@@ -7,8 +7,8 @@ import (
 
 // SortByteSlice sorts a byte slice deterministically
 func SortByteSlice(slice [][]byte) {
-	// FIXME: this should be SliceStable in order to have a deterministic order out of this function, but if only the
-	// data is important and not the actual slices objects order, Slice is sufficient
+	// We could use SliceStable in order to have a deterministic order out of this function, but as only the
+	// data is important and not the actual slices objects order, Slice is sufficient (and could be more efficient)
 	sort.Slice(slice, func(i, j int) bool {
 		return BytesSmaller(slice[i], slice[j])
 	})
