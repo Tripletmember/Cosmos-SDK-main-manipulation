@@ -21,12 +21,12 @@ func TestSet(t *testing.T) {
 			t.Fatal("Expected set length 3, got", s.Len())
 		}
 
-		if ! s.Has(o1) || ! s.Has(o2) || ! s.Has(o3) {
+		if !s.Has(o1) || !s.Has(o2) || !s.Has(o3) {
 			t.Fatal("Missing values in set")
 		}
 
 	})
-	t.Run("insert/duplicates", func(t * testing.T) {
+	t.Run("insert/duplicates", func(t *testing.T) {
 		o4 := []byte("abc")
 		s.Insert(o4)
 		o5 := []byte("def")
@@ -36,11 +36,11 @@ func TestSet(t *testing.T) {
 			t.Fatal("The set inserted duplicates : expected length 3, got", s.Len())
 		}
 
-		if ! s.Has(o1) || ! s.Has(o2) || ! s.Has(o3) {
+		if !s.Has(o1) || !s.Has(o2) || !s.Has(o3) {
 			t.Fatal("Missing values in set")
 		}
 	})
-	t.Run("insert/empty", func(t * testing.T) {
+	t.Run("insert/empty", func(t *testing.T) {
 		// Ensure this does not fail, should only insert one element
 		s.Insert(nil)
 		s.Insert([]byte{})
@@ -49,7 +49,7 @@ func TestSet(t *testing.T) {
 			t.Fatal("The set does not inserted an empty byte array : expected length 4, got", s.Len())
 		}
 
-		if ! s.Has([]byte{}) {
+		if !s.Has([]byte{}) {
 			t.Fatal("Missing values in set")
 		}
 	})
@@ -61,11 +61,11 @@ func TestSet(t *testing.T) {
 			t.Fatal("Invalid set range when the set is empty")
 		}
 	})
-	t.Run("range/order", func (t *testing.T) {
+	t.Run("range/order", func(t *testing.T) {
 		expected := [][]byte{{}, o1, o3, o2}
 		actual := s.Range()
 
-		if ! reflect.DeepEqual(expected, actual) {
+		if !reflect.DeepEqual(expected, actual) {
 			t.Fatalf("Invalid range, expecting %v, got %v", expected, actual)
 		}
 	})

@@ -59,7 +59,6 @@ func TestStore(t *testing.T) {
 			t.Fatal("unexpected error", err)
 		}
 
-
 	})
 	t.Run("update", func(t *testing.T) {
 		// TODO: add testing of updating an object with modified pk (should this fail ? should this just update the
@@ -109,7 +108,7 @@ func TestStore(t *testing.T) {
 		}
 		// delete non existing object
 		err = store.Delete(test.MutateBytes(obj.PrimaryKey()))
-		if !errors.Is(err, types.ErrNotFound){
+		if !errors.Is(err, types.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
 

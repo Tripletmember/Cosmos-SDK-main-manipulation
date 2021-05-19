@@ -9,10 +9,10 @@ func TestRange(t *testing.T) {
 	r, err := NewRange(3, 10)
 	checkErr(t, err)
 
-	t.Run("success", func (t *testing.T) {
-		stopIter, inRange:= false, false
+	t.Run("success", func(t *testing.T) {
+		stopIter, inRange := false, false
 		i, n := 0, 0
-		for ;! stopIter;  {
+		for !stopIter {
 			inRange, stopIter = r.CheckAndMoveForward()
 			if inRange {
 				i++
@@ -21,7 +21,9 @@ func TestRange(t *testing.T) {
 					t.Fail()
 				}
 			}
-			if ! stopIter { n++ }
+			if !stopIter {
+				n++
+			}
 		}
 
 		if i != 7 || n != 10 {
@@ -30,16 +32,16 @@ func TestRange(t *testing.T) {
 
 	})
 
-	t.Run("reusing range", func (t *testing.T) {
+	t.Run("reusing range", func(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			inRange, stopIter := r.CheckAndMoveForward()
-			if inRange || ! stopIter {
+			if inRange || !stopIter {
 				t.Fatalf("An already consumed range should always return false, true but returned %v, %v", inRange, stopIter)
 			}
 		}
 	})
 
-	t.Run("infinite ranges", func (t *testing.T) {
+	t.Run("infinite ranges", func(t *testing.T) {
 		const aSufficientlyLargeNumber = 5000
 
 		r, err := NewRange(0, 0)
@@ -70,40 +72,37 @@ func TestRange(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid range", func (t *testing.T) {
+	t.Run("invalid range", func(t *testing.T) {
 		_, err := NewRange(5, 3)
-		if ! errors.Is(err, errBadRange) {
+		if !errors.Is(err, errBadRange) {
 			t.Fatal("Unexpected error : ", err)
 		}
 	})
 
-	t.Run("empty range", func (t *testing.T) {
+	t.Run("empty range", func(t *testing.T) {
 		_, err := NewRange(1, 1)
-		if ! errors.Is(err, errBadRange) {
+		if !errors.Is(err, errBadRange) {
 			t.Fatal("Unexpected error : ", err)
 		}
 
 	})
 
-	t.Run("single element range", func (t *testing.T) {
+	t.Run("single element range", func(t *testing.T) {
 		r, err := NewRange(0, 1)
 		checkErr(t, err)
 
 		inRange, stop := r.CheckAndMoveForward()
-		if ! inRange || stop {
+		if !inRange || stop {
 			t.Fatal("This range should not be empty")
 		}
 
 		inRange, stop = r.CheckAndMoveForward()
-		if inRange || ! stop {
+		if inRange || !stop {
 			t.Fatal("This range should be over")
 		}
 	})
 
-
-
 }
-
 
 func checkErr(t *testing.T, err error) {
 	if err != nil {

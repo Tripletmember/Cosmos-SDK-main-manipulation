@@ -2,11 +2,12 @@ package crud
 
 import (
 	"errors"
+	"reflect"
+	"testing"
+
 	"github.com/iov-one/cosmos-sdk-crud/internal/store"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/iov-one/cosmos-sdk-crud/internal/test"
-	"reflect"
-	"testing"
 )
 
 func Test_query(t *testing.T) {

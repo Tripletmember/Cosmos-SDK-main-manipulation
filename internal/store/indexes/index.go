@@ -3,8 +3,9 @@ package indexes
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"math"
+
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
 
 // maxKeyLength defines the index key maximum length in bytes
@@ -59,7 +60,7 @@ func decodeIndexKey(key []byte) (sk types.SecondaryKey, err error) {
 		return sk, fmt.Errorf("%w, mismatch in length, decoded: %d, got: %d", types.ErrInternal, decodedLength, valueLength)
 	}
 	// create secondary key
-	value := make([]byte, length - metadataLength)
+	value := make([]byte, length-metadataLength)
 	copy(value, key[metadataLength:])
 	return types.SecondaryKey{
 		ID:    key[0],

@@ -168,8 +168,7 @@ func (this *Object) Equals(that *Object) error {
 	return nil
 }
 
-
-func MutateBytes(originalBytes []byte) (mutatedBytes []byte)  {
+func MutateBytes(originalBytes []byte) (mutatedBytes []byte) {
 	if originalBytes != nil {
 		mutatedBytes = make([]byte, len(originalBytes))
 		copy(mutatedBytes, originalBytes)

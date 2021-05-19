@@ -2,10 +2,11 @@ package indexes
 
 import (
 	"errors"
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
-	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 	"reflect"
 	"testing"
+
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 )
 
 func Test_filtering(t *testing.T) {
@@ -49,7 +50,7 @@ func Test_filtering(t *testing.T) {
 
 	t.Run("single sk set", func(t *testing.T) {
 		sks := []types.SecondaryKey{
-			{ID:0x0, Value: []byte("a2")},
+			{ID: 0x0, Value: []byte("a2")},
 		}
 		pks, err := store.Filter(sks, 0, 0)
 		checkError(t, err)
@@ -57,7 +58,7 @@ func Test_filtering(t *testing.T) {
 	})
 	t.Run("single set w/ range limit", func(t *testing.T) {
 		sks := []types.SecondaryKey{
-			{ID:0x1, Value: []byte("b3")},
+			{ID: 0x1, Value: []byte("b3")},
 		}
 		pks, err := store.Filter(sks, 0, 2)
 		checkError(t, err)
@@ -65,7 +66,7 @@ func Test_filtering(t *testing.T) {
 	})
 	t.Run("single set w/ range offset", func(t *testing.T) {
 		sks := []types.SecondaryKey{
-			{ID:0x1, Value: []byte("b3")},
+			{ID: 0x1, Value: []byte("b3")},
 		}
 		pks, err := store.Filter(sks, 1, 4)
 		checkError(t, err)
@@ -74,7 +75,7 @@ func Test_filtering(t *testing.T) {
 
 	t.Run("single set w/ range limit and offset", func(t *testing.T) {
 		sks := []types.SecondaryKey{
-			{ID:0x1, Value: []byte("b3")},
+			{ID: 0x1, Value: []byte("b3")},
 		}
 		pks, err := store.Filter(sks, 1, 2)
 		checkError(t, err)
@@ -83,8 +84,8 @@ func Test_filtering(t *testing.T) {
 
 	t.Run("multiple sk set", func(t *testing.T) {
 		sks := []types.SecondaryKey{
-			{ID:0x0, Value: []byte("a2")},
-			{ID:0x1, Value: []byte("b3")},
+			{ID: 0x0, Value: []byte("a2")},
+			{ID: 0x1, Value: []byte("b3")},
 		}
 		pks, err := store.Filter(sks, 0, 0)
 		checkError(t, err)
@@ -92,8 +93,8 @@ func Test_filtering(t *testing.T) {
 	})
 	t.Run("duplicated sk key", func(t *testing.T) {
 		sks := []types.SecondaryKey{
-			{ID:0x0, Value: []byte("a2")},
-			{ID:0x0, Value: []byte("a3")},
+			{ID: 0x0, Value: []byte("a2")},
+			{ID: 0x0, Value: []byte("a3")},
 		}
 		pks, err := store.Filter(sks, 0, 0)
 		checkError(t, err)
@@ -101,8 +102,8 @@ func Test_filtering(t *testing.T) {
 	})
 	t.Run("duplicated sk key/value", func(t *testing.T) {
 		sks := []types.SecondaryKey{
-			{ID:0x0, Value: []byte("a2")},
-			{ID:0x0, Value: []byte("a2")},
+			{ID: 0x0, Value: []byte("a2")},
+			{ID: 0x0, Value: []byte("a2")},
 		}
 		pks, err := store.Filter(sks, 0, 0)
 		checkError(t, err)
@@ -110,7 +111,7 @@ func Test_filtering(t *testing.T) {
 	})
 	t.Run("nonexistent sk key", func(t *testing.T) {
 		sks := []types.SecondaryKey{
-			{ID:0x4, Value: []byte("a2")},
+			{ID: 0x4, Value: []byte("a2")},
 		}
 		pks, err := store.Filter(sks, 0, 0)
 		checkError(t, err)
@@ -118,7 +119,7 @@ func Test_filtering(t *testing.T) {
 	})
 	t.Run("nonexistent sk value", func(t *testing.T) {
 		sks := []types.SecondaryKey{
-			{ID:0x0, Value: []byte("b1")},
+			{ID: 0x0, Value: []byte("b1")},
 		}
 		pks, err := store.Filter(sks, 0, 0)
 		checkError(t, err)
@@ -175,5 +176,5 @@ func checkError(t *testing.T, err error) {
 	if err != nil {
 		t.Fatal("Unexpected error : ", err)
 	}
-	
+
 }

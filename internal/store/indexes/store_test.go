@@ -3,9 +3,10 @@ package indexes
 import (
 	"bytes"
 	"errors"
+	"testing"
+
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/iov-one/cosmos-sdk-crud/internal/test"
-	"testing"
 )
 
 func TestStore(t *testing.T) {
@@ -68,7 +69,7 @@ func TestStore(t *testing.T) {
 		}
 		// delete non existing object
 		err = store.Delete(test.MutateBytes(obj.PrimaryKey()))
-		if !errors.Is(err, types.ErrNotFound){
+		if !errors.Is(err, types.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
 
@@ -115,14 +116,13 @@ func TestStore(t *testing.T) {
 	})
 }
 
-
 // Helpers functions for testing
 func checkIndex(t *testing.T, store *Store, expected *test.Object) {
 	var pks, err = store.QueryAll(expected.SecondaryKeys()[0])
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(pks) == 1 && !bytes.Equal(pks[0], expected.PrimaryKey()){
+	if len(pks) == 1 && !bytes.Equal(pks[0], expected.PrimaryKey()) {
 		t.Fatal("Primary key mismatch")
 	}
 }

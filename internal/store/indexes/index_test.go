@@ -3,10 +3,11 @@ package indexes
 import (
 	"bytes"
 	"errors"
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"math"
 	"reflect"
 	"testing"
+
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
 
 func Test_encodeDecodeIndexKey(t *testing.T) {
@@ -38,7 +39,7 @@ func Test_encodeDecodeIndexKey(t *testing.T) {
 		}
 	})
 	t.Run("encode/prefix check", func(t *testing.T) {
-		c, c2 := []byte ("myKey"), []byte ("myKey2")
+		c, c2 := []byte("myKey"), []byte("myKey2")
 
 		k, err := encodeIndexKey(types.SecondaryKey{
 			ID:    0x1,
@@ -84,7 +85,6 @@ func Test_encodeDecodeIndexKey(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
-
 
 		// Decode ek1 into dk1 and compare it to the original key k1
 		dk1, err = decodeIndexKey(ek1)
