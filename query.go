@@ -2,6 +2,7 @@ package crud
 
 import (
 	"fmt"
+
 	"github.com/iov-one/cosmos-sdk-crud/internal/store"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )

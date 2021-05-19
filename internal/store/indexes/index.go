@@ -3,8 +3,9 @@ package indexes
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"math"
+
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
 
 // maxKeyLength defines the index key maximum length in bytes

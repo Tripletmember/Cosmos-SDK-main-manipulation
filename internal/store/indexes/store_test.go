@@ -3,9 +3,10 @@ package indexes
 import (
 	"bytes"
 	"errors"
+	"testing"
+
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/iov-one/cosmos-sdk-crud/internal/test"
-	"testing"
 )
 
 func TestStore(t *testing.T) {

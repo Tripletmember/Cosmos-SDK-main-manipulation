@@ -2,6 +2,7 @@ package objects
 
 import (
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
@@ -12,23 +13,24 @@ import (
 func NewStore(cdc codec.Marshaler, db sdk.KVStore) Store {
 	ctr := Counter{}
 	return Store{
-		db:  db,
-		cdc: cdc,
+		db:      db,
+		cdc:     cdc,
 		objects: &ctr,
 	}
 }
+
 type Counter struct {
 	count uint64
 }
 
 // Store builds an object store
 type Store struct {
-	db     sdk.KVStore
-	cdc    codec.Marshaler
+	db  sdk.KVStore
+	cdc codec.Marshaler
 	// This has to be a reference in order to persist between calls
 	// Otherwise, if we want to use a simple uint64,
 	// we must switch to pointer receiver and pointer storage in struct (or use it through an interface)
-	objects* Counter
+	objects *Counter
 }
 
 // Create creates the object in the store

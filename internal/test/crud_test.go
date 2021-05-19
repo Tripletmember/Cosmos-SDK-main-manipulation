@@ -164,7 +164,7 @@ func Test_Starname(t *testing.T) {
 				t.Fatal("Unexpected error :", err)
 			}
 
-			if ! reflect.DeepEqual(actual, expected) {
+			if !reflect.DeepEqual(actual, expected) {
 				t.Fatalf("Starname mismatch, expected %v, got %v", expected, actual)
 			}
 			cursor.Next()

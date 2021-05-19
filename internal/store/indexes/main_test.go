@@ -1,9 +1,10 @@
 package indexes
 
 import (
-	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 	"os"
 	"testing"
+
+	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 )
 
 func TestMain(m *testing.M) {
