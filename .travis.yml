@@ -1,0 +1,50 @@
+language: go
+
+go:
+  - "1.15.5"
+
+os:
+  - linux
+
+dist: xenial
+
+cache:
+  directories:
+    - $HOME/.cache/go-build
+    - $HOME/gopath/pkg/mod
+
+env:
+  global:
+    - GO111MODULE=on
+    - GORACE="halt_on_error=1"
+
+before_script:
+  - set -eo pipefail
+  - go get -u golang.org/x/tools/cmd/goimports
+script:
+  # We could merge the two commands below for efficiency, but it would give less comprehensive errors
+  # Check files syntax and basic formatting
+  - function checkEmpty() {
+      if [ -n "$1" ] ;
+      then
+        echo -e "\nFiles with syntax or formatting errors ($ERR_FILES)\n";
+        return 1;
+      fi  
+    }
+  # If a syntax error occurs, the following command fails
+  - ERR_FILES=`find . -name "*.go" -execdir gofmt -l -s '{}' \+`
+  # Then check formatting errors
+  - checkEmpty "$ERR_FILES"
+  # Check advanced files formatting, including imports
+  - ERR_FILES=`find . -name "*.go" -execdir goimports -l '{}' \+`
+  - checkEmpty "$ERR_FILES"
+
+  # Run the test suite
+  - go test -v ./...
+
+# whitelist long living branches to avoid testing feature branches twice (as branch and as pull request)
+branches:
+  only:
+    - master
+    - /^v[0-9]+\.[0-9]+\.x$/
+    - /^v[0-9]+\.[0-9]+\.[0-9]+$/
