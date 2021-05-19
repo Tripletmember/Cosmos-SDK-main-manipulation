@@ -3,7 +3,6 @@ package objects
 import (
 	"bytes"
 	"errors"
-	"sort"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -165,17 +164,8 @@ func checkKeys(t *testing.T, actual [][]byte, objects []types.Object) {
 
 func createStoreWithRandomObjects(cdc codec.Marshaler, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []types.Object) {
 	store := NewStore(cdc, prefix.NewStore(db, []byte(uniqueID)))
-	var objs []types.Object = nil
-
-	for i := 0; i < n; i++ {
-		obj := test.NewRandomObject()
-		objs = append(objs, obj)
-		err := store.Create(obj)
-		if err != nil {
-			t.Fatal(err)
-		}
+	addToStore := func(obj types.Object) error {
+		return store.Create(obj)
 	}
-
-	sort.Slice(objs, func(i, j int) bool { return bytes.Compare(objs[i].PrimaryKey(), objs[j].PrimaryKey()) < 0 })
-	return store, objs
+	return store, test.CreateRandomObjects(addToStore, t, n)
 }
