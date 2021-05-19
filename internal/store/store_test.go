@@ -2,7 +2,11 @@ package store
 
 import (
 	"errors"
+	"reflect"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/iov-one/cosmos-sdk-crud/internal/test"
@@ -150,4 +154,37 @@ func TestStore(t *testing.T) {
 			t.Fatal("Cursor should be invalid at this point")
 		}
 	})
+
+	t.Run("query all", func(t *testing.T) {
+		s, objs := createStoreWithRandomObjects(cdc, db, t, 50, "queryall")
+
+		results, err := s.Query(nil, 0, 0)
+		if err != nil {
+			t.Fatal("unexpected error", err)
+		}
+
+		i := 0
+		for ; results.Valid(); results.Next() {
+			if i == len(objs) {
+				t.Fatalf("Length mismatch, exepected %v elements but got more", len(objs))
+			}
+			var actual = test.NewObject()
+			if err := results.Read(*actual); err != nil {
+				t.Fatal("Unexpected error :", err)
+			}
+			if !reflect.DeepEqual(*actual, objs[i]) {
+				t.Fatalf("Object mismatch at index %v : expected = %v(%[2]T), actual = %v(%[3]T)", i, objs[i], actual)
+			}
+			i++
+		}
+
+	})
+}
+
+func createStoreWithRandomObjects(cdc codec.Marshaler, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []types.Object) {
+	store := NewStore(cdc, db, []byte(uniqueID))
+	addToStore := func(obj types.Object) error {
+		return store.Create(obj)
+	}
+	return store, test.CreateRandomObjects(addToStore, t, n)
 }

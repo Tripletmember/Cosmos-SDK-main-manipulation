@@ -1,8 +1,11 @@
 package test
 
 import (
+	"bytes"
 	"crypto/rand"
 	"fmt"
+	"sort"
+	"testing"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -175,4 +178,20 @@ func MutateBytes(originalBytes []byte) (mutatedBytes []byte) {
 		mutatedBytes[len(mutatedBytes)-1] += 1
 	}
 	return
+}
+
+func CreateRandomObjects(add func(types.Object) error, t *testing.T, n int) []types.Object {
+	var objs []types.Object = nil
+
+	for i := 0; i < n; i++ {
+		obj := NewRandomObject()
+		objs = append(objs, obj)
+		err := add(obj)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	sort.Slice(objs, func(i, j int) bool { return bytes.Compare(objs[i].PrimaryKey(), objs[j].PrimaryKey()) < 0 })
+	return objs
 }

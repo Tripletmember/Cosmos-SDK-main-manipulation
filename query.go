@@ -7,7 +7,13 @@ import (
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
 
+type ValidQuery interface {
+	WithRange() RangeStatement
+	Do() (Cursor, error)
+}
+
 type QueryStatement interface {
+	ValidQuery
 	Where() WhereStatement
 }
 
@@ -28,9 +34,8 @@ type RangeEndStatement interface {
 }
 
 type FinalizedIndexStatement interface {
+	ValidQuery
 	And() WhereStatement
-	WithRange() RangeStatement
-	Do() (Cursor, error)
 }
 
 func newQuery(s store.Store) *query {
@@ -59,10 +64,6 @@ func (q *query) Do() (Cursor, error) {
 	// check if there are query errors
 	if len(q.errs) != 0 {
 		return nil, q.errs[0]
-	}
-	// check if query has something to query
-	if len(q.sks) == 0 {
-		return nil, fmt.Errorf("%w: no secondary keys supplied to query", ErrBadArgument)
 	}
 	// check if query was already run
 	if q.consumed {

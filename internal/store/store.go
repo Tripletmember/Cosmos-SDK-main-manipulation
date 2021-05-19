@@ -121,7 +121,13 @@ func (s Store) RegisterObject(o types.Object) {
 }
 
 func (s Store) Query(sks []types.SecondaryKey, start, end uint64) (*Cursor, error) {
-	pks, err := s.indexes.Filter(sks, start, end)
+	var err error
+	var pks [][]byte
+	if len(sks) == 0 {
+		pks, err = s.objects.GetAllKeys(start, end)
+	} else {
+		pks, err = s.indexes.Filter(sks, start, end)
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -99,16 +99,18 @@ func Test_query(t *testing.T) {
 			t.Fatal("unexpected result")
 		}
 	})
-	t.Run("bad argument/already consumed", func(t *testing.T) {
-		_, _ = q.Do() // do it twice in case we run this subtest only!
+
+	t.Run("success/no secondary keys", func(t *testing.T) {
+		q := newQuery(crudStore)
 		_, err := q.Do()
 		t.Logf("%s", err)
-		if !errors.Is(err, ErrBadArgument) {
+		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
 	})
-	t.Run("bad argument/no secondary keys", func(t *testing.T) {
-		q := newQuery(crudStore)
+
+	t.Run("bad argument/already consumed", func(t *testing.T) {
+		_, _ = q.Do() // do it twice in case we run this subtest only!
 		_, err := q.Do()
 		t.Logf("%s", err)
 		if !errors.Is(err, ErrBadArgument) {
