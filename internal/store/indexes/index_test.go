@@ -1,6 +1,7 @@
 package indexes
 
 import (
+	"bytes"
 	"errors"
 	"math"
 	"reflect"
@@ -19,7 +20,6 @@ func Test_encodeDecodeIndexKey(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Logf("%s", key)
 		decoded, err := decodeIndexKey(key)
 		if err != nil {
 			t.Fatal(err)
@@ -38,18 +38,101 @@ func Test_encodeDecodeIndexKey(t *testing.T) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 	})
+	t.Run("encode/prefix check", func(t *testing.T) {
+		c, c2 := []byte("myKey"), []byte("myKey2")
+
+		k, err := encodeIndexKey(types.SecondaryKey{
+			ID:    0x1,
+			Value: c,
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		k2, err := encodeIndexKey(types.SecondaryKey{
+			ID:    0x1,
+			Value: c2,
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		if bytes.HasPrefix(k2, k) {
+			t.Fatal("A key is a prefix of another")
+		}
+	})
+	t.Run("encode/empty key", func(t *testing.T) {
+		var ek1, ek2 []byte
+		var dk1, dk2 types.SecondaryKey
+		var err error
+
+		// Encode k1, a sk with empty value, into ek1
+		k1 := types.SecondaryKey{
+			ID:    0x1,
+			Value: make([]byte, 0),
+		}
+		ek1, err = encodeIndexKey(k1)
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		// Encode k2, a sk with nil value, into ek2
+		k2 := types.SecondaryKey{
+			ID:    0x1,
+			Value: nil,
+		}
+		ek2, err = encodeIndexKey(k2)
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		// Decode ek1 into dk1 and compare it to the original key k1
+		dk1, err = decodeIndexKey(ek1)
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		if !reflect.DeepEqual(k1, dk1) {
+			t.Fatal("Invalid encode/decode on secondary key with empty value")
+		}
+
+		// Decode ek2 into dk2, nil values are transformed into empty value, so check that dk2 is equal to k1
+		dk2, err = decodeIndexKey(ek2)
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		// Nil becomes an empty byte array through encode/decode
+		if !reflect.DeepEqual(k1, dk2) {
+			t.Fatal("Invalid encode/decode on secondary key with nil value")
+		}
+
+	})
 	t.Run("decode/error minimum length", func(t *testing.T) {
-		c := make([]byte, 1)
+		c := make([]byte, 2)
 		_, err := decodeIndexKey(c)
 		if !errors.Is(err, types.ErrInternal) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 	})
-	t.Run("decode/error length mismatch", func(t *testing.T) {
+	t.Run("decode/error length too small", func(t *testing.T) {
 		key := []byte{
+			0x0, // byte: id byte
 			0x0, // byte: length byte 0
 			0x0, // byte: length byte 1
+			0x1, // byte: key 1
+		}
+		_, err := decodeIndexKey(key)
+		if !errors.Is(err, types.ErrInternal) {
+			t.Fatalf("unexpected error: %s", err)
+		}
+	})
+
+	t.Run("decode/error length too big", func(t *testing.T) {
+		key := []byte{
 			0x0, // byte: id byte
+			0x0, // byte: length byte 0
+			0x2, // byte: length byte 1
 			0x1, // byte: key 1
 		}
 		_, err := decodeIndexKey(key)

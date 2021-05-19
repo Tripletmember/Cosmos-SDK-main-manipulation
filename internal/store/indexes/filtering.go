@@ -9,6 +9,11 @@ import (
 )
 
 func (s Store) Filter(secondaryKeys []types.SecondaryKey, start, end uint64) ([][]byte, error) {
+
+	if len(secondaryKeys) == 0 {
+		return nil, types.ErrBadArgument
+	}
+
 	// create rng
 	rng, err := util.NewRange(start, end)
 	if err != nil {
@@ -35,7 +40,7 @@ func findCommon(sets []util.ByteSet, rng *util.Range) [][]byte {
 	sort.Slice(sets, func(i, j int) bool {
 		return sets[i].Len() < sets[j].Len()
 	})
-	var pks [][]byte
+	pks := make([][]byte, 0)
 	for _, k := range sets[0].Range() {
 		if !isInAll(k, sets[1:]) {
 			continue

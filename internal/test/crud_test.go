@@ -3,7 +3,6 @@ package test
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -19,7 +18,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	db "github.com/tendermint/tm-db"
+	tmdb "github.com/tendermint/tm-db"
 )
 
 const starnameDelimiter string = "*"
@@ -102,7 +101,7 @@ func Test_Starname(t *testing.T) {
 	)
 	cdc := codec.NewProtoCodec(interfaceRegistry)
 	key := sdk.NewKVStoreKey("crud_test")
-	mdb := db.NewMemDB()
+	mdb := tmdb.NewMemDB()
 	ms := store.NewCommitMultiStore(mdb)
 	ms.MountStoreWithDB(key, sdk.StoreTypeIAVL, mdb)
 	if err := ms.LoadLatestVersion(); err != nil {
@@ -113,9 +112,10 @@ func Test_Starname(t *testing.T) {
 	store := crud.NewStore(cdc, db, nil)
 
 	// populate the store and test vectors
+	// The data is not sorted
 	domains := []string{"iov", "cosmos"}
-	accounts := []string{"", "binance", "coinbase", "kraken"}
-	owners := []string{"antoine", "dave"}
+	accounts := []string{"", "coinbase", "kraken", "binance"}
+	owners := []string{"dave", "antoine"}
 	starnames := make([]*TestStarname, 0)
 	starnamesByOwner := make(map[string][]*TestStarname)
 
@@ -143,9 +143,62 @@ func Test_Starname(t *testing.T) {
 		})
 		debugStarnames(owner, slice)
 	}
+	t.Run("success on empty result", func(t *testing.T) {
+		cursor, err := store.Query().Where().Index(starnameOwnerIndex).Equals([]byte("dave_")).Do()
+		if err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		if cursor.Valid() {
+			t.Fatal("Result found when no result expected")
+		}
+	})
+	t.Run("success on and query", func(t *testing.T) {
+		expected := []*TestStarname{
+			NewTestStarname(owners[1], domains[1], accounts[0]),
+			NewTestStarname(owners[1], domains[1], accounts[2]),
+		}
+		cursor, err := store.Query().
+			Where().Index(starnameOwnerIndex).Equals([]byte(owners[1])).
+			And().Index(starnameDomainIndex).Equals([]byte(domains[1])).
+			Do()
 
+		if err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		i := 0
+		for ; cursor.Valid(); cursor.Next() {
+
+			if i == 2 {
+				t.Fatal("Too many results for query")
+			}
+
+			actual := NewTestStarname("", "", "")
+			if err := cursor.Read(actual); err != nil {
+				t.Fatal("Unexpected error :", err)
+			}
+
+			if actual.Equals(expected[i]) != nil {
+				t.Fatalf("Starname mismatch, expected %v, got %v", expected[i], actual)
+			}
+			i++
+		}
+		if i != 2 {
+			t.Fatalf("Missing values for query : expecting %v, got %v", 2, i)
+		}
+
+	})
 	t.Run("success on primary key", func(t *testing.T) {
-		// TODO
+		for _, expected := range starnames {
+
+			actual := NewTestStarname("", "", "")
+			if err := store.Read(expected.PrimaryKey(), actual); err != nil {
+				t.Fatal("Unexpected error :", err)
+			}
+
+			if actual.Equals(expected) != nil {
+				t.Fatalf("Starname mismatch, expected %v, got %v", expected, actual)
+			}
+		}
 	})
 
 	t.Run("success on select all", func(t *testing.T) {
@@ -182,13 +235,11 @@ func Test_Starname(t *testing.T) {
 				t.Fatal(err)
 			}
 			wants := starnamesByOwner[owner]
-			debugStarnames(fmt.Sprintf("%s un-ranged wants", owner), wants)
 			for i := 0; cursor.Valid(); cursor.Next() {
 				starname := NewTestStarname("", "", "")
 				if err := cursor.Read(starname); err != nil {
 					t.Fatal(err)
 				}
-				debugStarname(starname)
 				if i >= len(wants) {
 					t.Fatal("got more than expected")
 				}
@@ -209,12 +260,15 @@ func Test_Starname(t *testing.T) {
 					t.Fatal(err)
 				}
 				n := 0
+				wants := owned[i:]
 				for ; cursor.Valid(); cursor.Next() {
 					starname := NewTestStarname("", "", "")
 					if err := cursor.Read(starname); err != nil {
 						t.Fatal(err)
 					}
-					debugStarname(starname)
+					if err := wants[n].Equals(starname); err != nil {
+						t.Fatalf("For owner %v at index %v : expecting %v but got %v", owner, n, wants[n].GetStarname(), starname.GetStarname())
+					}
 					n++
 				}
 				if n != end-i {
@@ -226,17 +280,14 @@ func Test_Starname(t *testing.T) {
 }
 
 func debugStarname(starname *TestStarname) {
-	if len(os.Getenv("VSCODE_CLI")) > 0 {
-		fmt.Printf("%16s %-32x %v %v\n", starname.GetStarname(), starname.PrimaryKey(), starname.SecondaryKeys()[0], starname.SecondaryKeys()[1])
-	}
+	fmt.Printf("%16s %-32x %v %v\n", starname.GetStarname(), starname.PrimaryKey(), starname.SecondaryKeys()[0], starname.SecondaryKeys()[1])
 }
 
 func debugStarnames(name string, starnames []*TestStarname) {
-	if len(os.Getenv("VSCODE_CLI")) > 0 {
-		fmt.Printf("___  %s ___\n", name)
-		for _, starname := range starnames {
-			debugStarname(starname)
-		}
-		fmt.Printf("___ ~%s ___\n", name)
+	fmt.Printf("___  %s ___\n", name)
+	for _, starname := range starnames {
+		debugStarname(starname)
 	}
+	fmt.Printf("___ ~%s ___\n", name)
+
 }

@@ -7,20 +7,17 @@ import (
 
 // SortByteSlice sorts a byte slice deterministically
 func SortByteSlice(slice [][]byte) {
+	// We could use SliceStable in order to have a deterministic order out of this function, but as only the
+	// data is important and not the actual slices objects order, Slice is sufficient (and could be more efficient)
 	sort.Slice(slice, func(i, j int) bool {
-		return bytes.Compare(slice[i], slice[j]) < 0
+		return BytesSmaller(slice[i], slice[j])
 	})
 }
 
-func BytesBigger(a, b []byte) bool {
-	return bytes.Compare(a, b) == 1
-}
-
 func BytesSmaller(a, b []byte) bool {
-	return !BytesBigger(a, b)
+	return bytes.Compare(a, b) < 0
 }
 
 func BytesBiggerEqual(a, b []byte) bool {
-	x := bytes.Compare(a, b)
-	return x == 0 || x == 1
+	return !BytesSmaller(a, b)
 }
