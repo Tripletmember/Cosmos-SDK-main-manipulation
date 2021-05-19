@@ -31,21 +31,12 @@ func Test_filtering(t *testing.T) {
 	err = store.Index(test.NewCustomObject("pk6", "a4", "b3"))
 	checkError(t, err)
 
-	/*t.Run("empty sk set", func(t *testing.T) {
-		pks, err := store.Filter(make([]types.SecondaryKey, 0), 0, 0)
-		checkError(t, err)
-		if pks == nil || len(pks) != 0 {
-			t.Fatal("Result should be an empty se")
+	t.Run("empty sk set", func(t *testing.T) {
+		_, err := store.Filter(make([]types.SecondaryKey, 0), 0, 0)
+		if !errors.Is(err, types.ErrBadArgument) {
+			t.Fatal("Unexpected error", err, "(expecting bad argument)")
 		}
 	})
-	t.Run("empty set w/ range", func(t *testing.T) {
-		sks := []types.SecondaryKey{
-			{ID:0x0, Value: []byte("b1")},
-		}
-		pks, err := store.Filter(sks, 0, 0)
-		checkError(t, err)
-		checkExpected(t, pks, []string{})
-	})*/
 
 	t.Run("single sk set", func(t *testing.T) {
 		sks := []types.SecondaryKey{

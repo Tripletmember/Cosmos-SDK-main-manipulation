@@ -9,6 +9,11 @@ import (
 )
 
 func (s Store) Filter(secondaryKeys []types.SecondaryKey, start, end uint64) ([][]byte, error) {
+
+	if len(secondaryKeys) == 0 {
+		return nil, types.ErrBadArgument
+	}
+
 	// create rng
 	rng, err := util.NewRange(start, end)
 	if err != nil {
