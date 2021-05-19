@@ -79,4 +79,71 @@ func TestStore(t *testing.T) {
 	if !errors.Is(err, types.ErrNotFound) {
 		t.Fatal("unexpected error", err)
 	}
+
+	t.Run("create/duplicate", func(t * testing.T) {
+		if err = s.Create(test.NewDeterministicObject()); err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		err = s.Create(test.NewDeterministicObject())
+		if ! errors.Is(err, types.ErrAlreadyExists) {
+			t.Fatal("Object should be a duplicate")
+		}
+	})
+	t.Run("delete/existing", func (t * testing.T) {
+		err = s.Delete(test.NewDeterministicObject().PrimaryKey())
+		if err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		err = s.Read(test.NewDeterministicObject().PrimaryKey(), obj)
+		if ! errors.Is(err, types.ErrNotFound) {
+			t.Fatal("Object should not exist anymore")
+		}
+	})
+	t.Run("delete/non existing", func (t * testing.T) {
+		err = s.Delete(test.NewDeterministicObject().PrimaryKey())
+		if ! errors.Is(err, types.ErrNotFound) {
+			t.Fatal("Deleting an non existing object should result in a not found error")
+		}
+	})
+
+	t.Run("indexes", func (t * testing.T) {
+		obj = test.NewDeterministicObject()
+		if err = s.Create(obj); err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		if err = s.indexes.Index(obj); ! errors.Is(err, types.ErrAlreadyExists) {
+			t.Fatal("The object indexes should have been added to the index store")
+		}
+
+		if err = s.Delete(obj.PrimaryKey()); err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		if err = s.indexes.Index(obj); err != nil {
+			t.Fatal("The object indexes should have been removed from the index store, err :", err)
+		}
+
+	})
+	t.Run("query", func (t* testing.T) {
+		s := NewStore(cdc, db, []byte("query"))
+		obj = test.NewDeterministicObject()
+		if err = s.Create(obj); err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		cursor, err := s.Query(obj.SecondaryKeys(), 0, 0)
+		if err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+
+		if ! cursor.Valid() { t.Fatal("Cursor should be valid at this point") }
+		actual := test.NewObject()
+		if err := cursor.Read(actual); err != nil {
+			t.Fatal("Unexpected error :", err)
+		}
+		if actual.Equals(&obj) != nil {
+			t.Fatal("Invalid object, expected = ", test.NewDeterministicObject(), ", actual = ", actual)
+		}
+
+		cursor.Next()
+		if cursor.Valid() { t.Fatal("Cursor should be invalid at this point") }
+	})
 }
