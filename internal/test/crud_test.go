@@ -2,6 +2,7 @@ package test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"reflect"
 	"sort"
@@ -13,12 +14,15 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmdb "github.com/tendermint/tm-db"
+
+	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/libs/rand"
+
 	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/pkg/errors"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmdb "github.com/tendermint/tm-db"
 )
 
 const starnameDelimiter string = "*"
@@ -30,6 +34,25 @@ var _ = crud.Object(NewTestStarname("", "", ""))
 
 type TestStarname struct {
 	*types.TestStarname
+}
+
+func newStarnameStore() crud.Store {
+	interfaceRegistry := cdctypes.NewInterfaceRegistry()
+	interfaceRegistry.RegisterInterface("crud.internal.test",
+		(*crud.Object)(nil),
+		&TestStarname{},
+	)
+	cdc := codec.NewProtoCodec(interfaceRegistry)
+	key := sdk.NewKVStoreKey("crud_test")
+	mdb := tmdb.NewMemDB()
+	ms := store.NewCommitMultiStore(mdb)
+	ms.MountStoreWithDB(key, sdk.StoreTypeIAVL, mdb)
+	if err := ms.LoadLatestVersion(); err != nil {
+		panic(err)
+	}
+	ctx := sdk.NewContext(ms, tmproto.Header{Time: time.Now()}, true, log.NewNopLogger())
+	db := ctx.KVStore(key)
+	return crud.NewStore(cdc, db, nil)
 }
 
 func NewTestStarname(owner, domain, name string) *TestStarname {
@@ -94,22 +117,7 @@ func (o *TestStarname) Equals(x *TestStarname) error {
 
 func Test_Starname(t *testing.T) {
 	// setup dependencies
-	interfaceRegistry := cdctypes.NewInterfaceRegistry()
-	interfaceRegistry.RegisterInterface("crud.internal.test",
-		(*crud.Object)(nil),
-		&TestStarname{},
-	)
-	cdc := codec.NewProtoCodec(interfaceRegistry)
-	key := sdk.NewKVStoreKey("crud_test")
-	mdb := tmdb.NewMemDB()
-	ms := store.NewCommitMultiStore(mdb)
-	ms.MountStoreWithDB(key, sdk.StoreTypeIAVL, mdb)
-	if err := ms.LoadLatestVersion(); err != nil {
-		t.Fatal(err)
-	}
-	ctx := sdk.NewContext(ms, tmproto.Header{Time: time.Now()}, true, log.NewNopLogger())
-	db := ctx.KVStore(key)
-	store := crud.NewStore(cdc, db, nil)
+	store := newStarnameStore()
 
 	// populate the store and test vectors
 	// The data is not sorted
@@ -277,6 +285,106 @@ func Test_Starname(t *testing.T) {
 			}
 		}
 	})
+}
+
+func BenchmarkQuerySimple_1000_Objs(b *testing.B) {
+	benchmarkSingleQuery(b, 1000)
+}
+func BenchmarkQuerySimple_10000_Objs(b *testing.B) {
+	benchmarkSingleQuery(b, 10000)
+}
+func BenchmarkQuerySimple_100000_Objs(b *testing.B) {
+	benchmarkSingleQuery(b, 100000)
+}
+func BenchmarkQuerySimple_1000000_Objs(b *testing.B) {
+	benchmarkSingleQuery(b, 1000000)
+}
+
+func BenchmarkQueryAnded_1000_Objs(b *testing.B) {
+	benchmarkAndedQuery(b, 1000)
+}
+func BenchmarkQueryAnded_10000_Objs(b *testing.B) {
+	benchmarkAndedQuery(b, 10000)
+}
+func BenchmarkQueryAnded_100000_Objs(b *testing.B) {
+	benchmarkAndedQuery(b, 100000)
+}
+func BenchmarkQueryAnded_1000000_Objs(b *testing.B) {
+	benchmarkAndedQuery(b, 1000000)
+}
+
+func BenchmarkQueryAll_1000_Objs(b *testing.B) {
+	benchmarkQueryAll(b, 1000)
+}
+
+func BenchmarkQueryAll_10000_Objs(b *testing.B) {
+	benchmarkQueryAll(b, 10000)
+}
+func BenchmarkQueryAll_100000_Objs(b *testing.B) {
+	benchmarkQueryAll(b, 100000)
+}
+func BenchmarkQueryAll_1000000_Objs(b *testing.B) {
+	benchmarkQueryAll(b, 1000000)
+}
+
+func benchmarkSingleQuery(b *testing.B, nbObjects int) {
+	benchmarkQuery(b, nbObjects, func(query crud.QueryStatement) (crud.Cursor, error) {
+		return query.Where().Index(starnameDomainIndex).Equals([]byte("domain1")).Do()
+	})
+}
+
+func benchmarkAndedQuery(b *testing.B, nbObjects int) {
+	benchmarkQuery(b, nbObjects, func(query crud.QueryStatement) (crud.Cursor, error) {
+		return query.Where().Index(starnameDomainIndex).Equals([]byte("domain1a")).
+			And().Index(starnameOwnerIndex).Equals([]byte("star1rkwdtq34kq69j7vta3etxdzrat672x6x4y2duv")).Do()
+	})
+}
+
+func benchmarkQueryAll(b *testing.B, nbObjects int) {
+	benchmarkQuery(b, nbObjects, crud.QueryStatement.Do)
+}
+
+var testStores map[int]crud.Store = make(map[int]crud.Store)
+
+// benchmarkQuery benchmarks a simple query in a store with nbObjects objects
+// This allows to detect if the query execution time evolves non-linearly with the number of objects in the store
+func benchmarkQuery(b *testing.B, nbObjects int, doQuery func(crud.QueryStatement) (crud.Cursor, error)) {
+	// Cache created stores
+	if _, ok := testStores[nbObjects]; !ok {
+		testStores[nbObjects] = starnameStoreWithRandomObjects(nbObjects)
+	}
+	s := testStores[nbObjects]
+	obj := NewTestStarname("", "", "")
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		curs, err := doQuery(s.Query())
+		if err != nil {
+			panic(err)
+		}
+		for ; curs.Valid(); curs.Next() {
+			if err := curs.Read(obj); err != nil {
+				panic(err)
+			}
+		}
+	}
+}
+
+func starnameStoreWithRandomObjects(nbObjects int) crud.Store {
+	s := newStarnameStore()
+
+	for i := 0; i < nbObjects; i++ {
+		// 100 names per domain
+		generatedDomain := "domain" + fmt.Sprintf("%x", i/100)
+		// Repeat names over the objects (but ever with the same domain)
+		generatedName := "name" + fmt.Sprintf("%x", i%1000)
+
+		owner := "star" + base64.StdEncoding.EncodeToString(rand.Bytes(30))
+		starname := NewTestStarname(owner, generatedDomain, generatedName)
+		if err := s.Create(starname); err != nil {
+			panic(err)
+		}
+	}
+	return s
 }
 
 func debugStarname(starname *TestStarname) {

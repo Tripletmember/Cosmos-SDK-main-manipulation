@@ -76,7 +76,7 @@ func (s Store) Index(o types.Object) error {
 		if err != nil {
 			return err
 		}
-		// add the computed key obtained after registering it to the keys lsit
+		// add the computed key obtained after registering it to the keys list
 		keysList[i] = computedKey
 	}
 	// save indexes list
