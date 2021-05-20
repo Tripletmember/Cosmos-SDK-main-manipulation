@@ -18,6 +18,9 @@ func BytesSmaller(a, b []byte) bool {
 	return bytes.Compare(a, b) < 0
 }
 
-func BytesBiggerEqual(a, b []byte) bool {
-	return !BytesSmaller(a, b)
+func BytesBiggerEqual(a, b []byte) (isGreater, isEqual bool) {
+	comp := bytes.Compare(a, b)
+	isGreater = comp > 0
+	isEqual = comp == 0
+	return
 }
