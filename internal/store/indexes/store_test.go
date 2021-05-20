@@ -3,6 +3,9 @@ package indexes
 import (
 	"bytes"
 	"errors"
+	"math/rand"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
@@ -11,12 +14,7 @@ import (
 
 func TestStore(t *testing.T) {
 
-	ctx, key, cdc, err := test.New()
-	if err != nil {
-		t.Fatalf("failed to create tests: %s", err)
-	}
-	testKVStore := ctx.KVStore(key)
-	store := NewStore(cdc, testKVStore)
+	store := createTestStore()
 
 	t.Run("index", func(t *testing.T) {
 		obj := test.NewRandomObject()
@@ -116,7 +114,26 @@ func TestStore(t *testing.T) {
 	})
 }
 
-// Helpers functions for testing
+func BenchmarkStore_Index(b *testing.B) {
+	s := createTestStore()
+
+	var sk1, sk2 strings.Builder
+	const bytesPerSK = 80
+	for i := 0; i < bytesPerSK; i++ {
+		sk1.WriteByte(byte(rand.Int()))
+		sk2.WriteByte(byte(rand.Int()))
+	}
+
+	o := test.NewCustomObject("pk1", sk1.String(), sk2.String())
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		o.TestPrimaryKey = []byte("pk" + strconv.FormatInt(int64(n), 36))
+		s.Index(o)
+	}
+}
+
+// Helper functions for testing
 func checkIndex(t *testing.T, store *Store, expected *test.Object) {
 	var pks, err = store.QueryAll(expected.SecondaryKeys()[0])
 	if err != nil {
@@ -125,4 +142,13 @@ func checkIndex(t *testing.T, store *Store, expected *test.Object) {
 	if len(pks) == 1 && !bytes.Equal(pks[0], expected.PrimaryKey()) {
 		t.Fatal("Primary key mismatch")
 	}
+}
+
+func createTestStore() Store {
+	ctx, key, cdc, err := test.New()
+	if err != nil {
+		panic("failed to create store:" + err.Error())
+	}
+	testKVStore := ctx.KVStore(key)
+	return NewStore(cdc, testKVStore)
 }
