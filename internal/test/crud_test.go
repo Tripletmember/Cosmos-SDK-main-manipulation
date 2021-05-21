@@ -28,6 +28,7 @@ import (
 const starnameDelimiter string = "*"
 const starnameOwnerIndex crud.IndexID = 0x1
 const starnameDomainIndex crud.IndexID = 0x2
+const starnameResourceIndex crud.IndexID = 0x3
 
 // assert Object is implemented by test objects
 var _ = crud.Object(NewTestStarname("", "", ""))
@@ -55,15 +56,19 @@ func newStarnameStore() crud.Store {
 	return crud.NewStore(cdc, db, nil)
 }
 
-func NewTestStarname(owner, domain, name string) *TestStarname {
+func NewTestStarnameWithResource(owner, domain, name, resource string) *TestStarname {
 	testObject := types.TestStarname{
-		Owner:  owner,
-		Domain: domain,
-		Name:   &name,
+		Owner:    owner,
+		Domain:   domain,
+		Name:     &name,
+		Resource: resource,
 	}
 	object := TestStarname{&testObject}
 
 	return &object
+}
+func NewTestStarname(owner, domain, name string) *TestStarname {
+	return NewTestStarnameWithResource(owner, domain, name, "unused")
 }
 
 func (o TestStarname) PrimaryKey() (primaryKey []byte) {
@@ -91,6 +96,10 @@ func (o TestStarname) SecondaryKeys() (secondaryKeys []crud.SecondaryKey) {
 			Value: []byte(o.Domain),
 		}
 		sks = append(sks, domainIndex)
+	}
+
+	if len(o.Resource) != 0 {
+		sks = append(sks, crud.SecondaryKey{ID: starnameResourceIndex, Value: []byte(o.Resource)})
 	}
 	return sks
 }

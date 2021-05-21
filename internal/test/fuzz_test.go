@@ -3,10 +3,14 @@ package test
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
+	"io"
+	"net/http"
 	"testing"
+
+	"github.com/lucasjones/reggen"
 
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 
@@ -15,36 +19,55 @@ import (
 	crud "github.com/iov-one/cosmos-sdk-crud"
 )
 
-const domainMinLength = 4
-const domainMaxLength = 16
-const domainAlphabet = "-_abcdefghijklmnopqrstuvwxyz0123456789"
-
-const accountMinLength = 0
-const accountMaxLength = 64
-const accountAlphabet = "-_\\.abcdefghijklmnopqrstuvwxyz0123456789"
-
-func newRandomString(min, max int, alphabet []byte) string {
-	length := rand.Int()%(max-min) + min
-	alphabetLength := len(alphabet)
-	var builder strings.Builder
-	for i := 0; i < length; i++ {
-		char := alphabet[rand.Int()%alphabetLength]
-		builder.WriteByte(char)
-	}
-	return builder.String()
+type Config struct {
+	AccountRegex, DomainRegex, ResourceRegex string
 }
 
-func NewRandomStarname() *TestStarname {
-	domain := newRandomString(domainMinLength, domainMaxLength, []byte(domainAlphabet))
-	account := newRandomString(accountMinLength, accountMaxLength, []byte(accountAlphabet))
+func (c Config) String() string {
+	return fmt.Sprintf("Configuration:\n\tAccount regex : %v\n\tDomain regex : %v\n\tResource regex : %v\n",
+		c.AccountRegex, c.DomainRegex, c.ResourceRegex)
+}
+
+func newRandomString(regex string) (string, error) {
+	return reggen.Generate(regex, 256)
+}
+
+func fetchConfig(url string) (*Config, error) {
+	resp, err := http.Post(url, "", nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(body, &data); err != nil {
+		return nil, err
+	}
+
+	data = data["result"].(map[string]interface{})
+	data = data["configuration"].(map[string]interface{})
+
+	return &Config{
+		AccountRegex:  data["valid_account_name"].(string),
+		DomainRegex:   data["valid_domain_name"].(string),
+		ResourceRegex: data["valid_resource"].(string),
+	}, nil
+}
+
+func NewRandomStarname(config *Config) *TestStarname {
+	domain, _ := newRandomString(config.DomainRegex)
+	account, _ := newRandomString(config.AccountRegex)
+	resource, _ := newRandomString(config.ResourceRegex)
 	owner := "star" + base64.StdEncoding.EncodeToString(rand.Bytes(30))
-	return NewTestStarname(owner, domain, account)
+	return NewTestStarnameWithResource(owner, domain, account, resource)
 }
 
 type testFunc func(*testing.T, crud.Store, []*TestStarname)
 
 const nbObjectsInTheStore = 100000
 const nbIterations = 50000
+const mainnetConfigEndpoint = "https://lcd-private-iov-mainnet-2.iov.one/configuration/query/configuration"
 
 // We need a constant seed in order to be consistent between runs
 const randomSeed = int64(123465789)
@@ -55,8 +78,13 @@ func TestFuzz(t *testing.T) {
 		t.Skip("Skipping test in short mode")
 	}
 
-	rand.Seed(randomSeed)
+	config, err := fetchConfig(mainnetConfigEndpoint)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Fetched config from mainnet : ", config)
 
+	rand.Seed(randomSeed)
 	fmt.Println("Fuzzing seed : ", randomSeed)
 
 	s := newStarnameStore()
@@ -64,7 +92,7 @@ func TestFuzz(t *testing.T) {
 	// Create nbObjectsInTheStore objects and store them to the store and to the objs slice
 	objs := make([]*TestStarname, nbObjectsInTheStore)
 	for i := 0; i < nbObjectsInTheStore; i++ {
-		objs[i] = NewRandomStarname()
+		objs[i] = NewRandomStarname(config)
 		err := s.Create(objs[i])
 		if errors.Is(err, types.ErrAlreadyExists) {
 			// This is very unlikely, but the test should not fail in that case
@@ -133,7 +161,7 @@ func testCursorUpdate(t *testing.T, store crud.Store, objects []*TestStarname) {
 		t.Fatal("Missing starname object in query")
 	}
 
-	obj.Owner = "U" + obj.Owner[1:]
+	obj.Resource = "U" + obj.Resource[1:]
 	err = cursor.Update(obj)
 	CheckNoError(t, err)
 
@@ -179,7 +207,7 @@ func testUpdate(t *testing.T, store crud.Store, objects []*TestStarname) {
 
 func testAndQuery(t *testing.T, store crud.Store, objects []*TestStarname) {
 	obj := randomObject(objects)
-	cursor, err := store.Query().Where().Index(starnameDomainIndex).Equals([]byte(obj.Domain)).
+	cursor, err := store.Query().Where().Index(starnameResourceIndex).Equals([]byte(obj.Resource)).
 		And().Index(starnameOwnerIndex).Equals([]byte(obj.Owner)).Do()
 	CheckNoError(t, err)
 	if !cursor.Valid() {
@@ -192,8 +220,8 @@ func testAndQuery(t *testing.T, store crud.Store, objects []*TestStarname) {
 		if result.Owner != obj.Owner {
 			t.Fatalf("Got an unexpected result : expecting owner %v, got owner %v", obj.Owner, result.Owner)
 		}
-		if result.Domain != obj.Domain {
-			t.Fatalf("Got an unexpected result : expecting domain %v, got domain %v", obj.Domain, result.Domain)
+		if result.Resource != obj.Resource {
+			t.Fatalf("Got an unexpected result : expecting resource %v, got resource %v", obj.Resource, result.Resource)
 		}
 	}
 
