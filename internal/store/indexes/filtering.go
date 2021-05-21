@@ -2,6 +2,7 @@ package indexes
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/iterator"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/iov-one/cosmos-sdk-crud/internal/util"
 )
@@ -12,24 +13,17 @@ func (s Store) Filter(secondaryKeys []types.SecondaryKey, start, end uint64) ([]
 		return nil, types.ErrBadArgument
 	}
 
-	results := make([][]byte, 0)
-	addToResults := func(key []byte) bool {
-		results = append(results, key)
-		return true
+	iterator, err := s.FilterWithIterator(secondaryKeys, start, end)
+	if err != nil {
+		return nil, err
 	}
-
-	err := s.FilterWithCallback(secondaryKeys, start, end, addToResults)
-	return results, err
+	return iterator.Collect(), err
 }
 
-func (s Store) FilterWithCallback(
-	sks []types.SecondaryKey,
-	start, end uint64,
-	do func(primaryKey []byte) (stop bool),
-) (err error) {
+func (s Store) FilterWithIterator(sks []types.SecondaryKey, start, end uint64) (types.Iterator, error) {
 	rng, err := util.NewRange(start, end)
 	if err != nil {
-		return types.ErrBadArgument
+		return iterator.NilIterator{}, types.ErrBadArgument
 	}
 
 	indexStores := make([]sdk.Iterator, len(sks))
@@ -37,27 +31,27 @@ func (s Store) FilterWithCallback(
 	for i, sk := range sks {
 		kv, _, err = s.kvStore(sk)
 		if err != nil {
-			return err
+			return iterator.NilIterator{}, err
 		}
 		iter := kv.Iterator(nil, nil)
 		indexStores[i] = iter
 	}
-	for {
-		pk, noMoreValues := moveForward(indexStores)
-		inRange, stopIter := rng.CheckAndMoveForward()
-		// if filtering over
-		if noMoreValues || stopIter {
-			break
-		}
-		// if we are in the range [start, end[
-		if inRange {
-			// if after do the caller wants to stop
-			if !do(pk) {
-				break
+
+	it := iterator.NewKeyIterator(func() ([]byte, bool) {
+		for {
+			pk, noMoreValues := moveForward(indexStores)
+			inRange, stopIter := rng.CheckAndMoveForward()
+			// if filtering over
+			if noMoreValues || stopIter {
+				return nil, false
+			}
+			// if we are in the range [start, end[
+			if inRange {
+				return pk, true
 			}
 		}
-	}
-	return nil
+	})
+	return it, nil
 }
 
 // moveForward takes the next key that is present in all the iterators result sets

@@ -3,6 +3,8 @@ package objects
 import (
 	"fmt"
 
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/iterator"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
@@ -90,50 +92,53 @@ func (s Store) Delete(primaryKey []byte) error {
 	return nil
 }
 
-// GetAllKeys returns a slice containing the primary key of all the objects present in the store
+// GetAllKeysWithIterator returns an iterator yielding the primary key of all the objects present in the store
 // in the interval [start, end[ and in ascending order.
-// Returns an error if the iterator cannot be closed
-func (s Store) GetAllKeys(start, end uint64) ([][]byte, error) {
+func (s Store) GetAllKeysWithIterator(start uint64, end uint64) (types.Iterator, error) {
 	// We could use append but it has to reallocate each time its capacity is reached
 	// Tracking the number of objects on the store is more efficient
 
 	// If the start offset is superior to the number of element, we can skip directly
 	if start >= s.objects.count {
-		return make([][]byte, 0), nil
+		return iterator.NilIterator{}, nil
 	}
 
-	// The maximum size of the result set is the number of objects minus the start offset
-	var size = s.objects.count - start
-	// If the range is finite, the actual size is the queried length, with a maximum of the previously computed length
-	if end != 0 {
-		size = util.Uint64Min(end-start, size)
-	}
-
-	keys := make([][]byte, size)
 	// The start and end arguments of Iterator() are not indexes but byte array boundaries
 	it := s.db.Iterator(nil, nil)
-	defer it.Close()
 
 	rng, err := util.NewRange(start, end)
 	if err != nil {
-		return make([][]byte, 0), err
+		return iterator.NilIterator{}, err
 	}
 
-	var stopIter, inRange bool
-	for i := uint64(0); it.Valid() && !stopIter; it.Next() {
-		inRange, stopIter = rng.CheckAndMoveForward()
-		//TODO: this could be changed with juste inRange when merged with the new Range version
-		if inRange && !stopIter {
-			// This should never happen and is an internal error
-			if i >= size {
-				return make([][]byte, 0), types.ErrInternal
+	resultIterator := iterator.NewKeyIterator(func() ([]byte, bool) {
+		for {
+			noMoreValues := !it.Valid()
+			inRange, stopIter := rng.CheckAndMoveForward()
+			if stopIter || noMoreValues {
+				it.Close()
+				return nil, false
 			}
 
-			keys[i] = it.Key()
-			i++
+			pk := it.Key()
+			it.Next()
+			if inRange {
+				return pk, true
+			}
 		}
+	})
+
+	return resultIterator, nil
+}
+
+// GetAllKeys returns a slice containing the primary key of all the objects present in the store
+// in the interval [start, end[ and in ascending order.
+func (s Store) GetAllKeys(start, end uint64) ([][]byte, error) {
+	it, err := s.GetAllKeysWithIterator(start, end)
+	if err != nil {
+		return nil, err
 	}
-	return keys, nil
+	return it.Collect(), err
 }
 
 // set takes care of doing object marshalling
