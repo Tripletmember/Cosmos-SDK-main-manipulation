@@ -38,7 +38,14 @@ func fetchConfig(url string) (*Config, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	body := make([]byte, 4096)
+	// ErrUnexpectedEOF is expected as we over-allocate our slice
+	n, err := io.ReadFull(resp.Body, body)
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
+		return nil, err
+	}
+	// Resize the slice to the correct size
+	body = body[:n]
 
 	var data map[string]interface{}
 	if err := json.Unmarshal(body, &data); err != nil {
