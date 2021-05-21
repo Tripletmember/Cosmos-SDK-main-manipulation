@@ -25,4 +25,6 @@ message TestStarname {
     string domain = 2 [(gogoproto.moretags) = "yaml:\"domain\""];
     // Name is the name of the account
     google.protobuf.StringValue name = 3 [(gogoproto.wktpointer) = true, (gogoproto.moretags) = "yaml:\"name\""];
+    // Resource
+    string resource = 4 [(gogoproto.moretags) = "yaml:\"resource\""];
 }

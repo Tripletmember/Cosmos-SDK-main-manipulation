@@ -195,3 +195,10 @@ func CreateRandomObjects(add func(types.Object) error, t *testing.T, n int) []ty
 	sort.Slice(objs, func(i, j int) bool { return bytes.Compare(objs[i].PrimaryKey(), objs[j].PrimaryKey()) < 0 })
 	return objs
 }
+
+func CheckNoError(t *testing.T, err error) {
+	if err != nil {
+		t.Fatal("Unexpected error : ", err)
+	}
+
+}
