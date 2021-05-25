@@ -1,12 +1,14 @@
+os: linux
+dist: xenial
+
 language: go
 
-go:
-  - "1.15.5"
-
-os:
-  - linux
-
-dist: xenial
+jobs:
+  include:
+    - go: "master"
+      env: "GOIMPORTS_CHECK=0"
+    - go: "1.15.5"
+      env: "GOIMPORTS_CHECK=1"
 
 cache:
   directories:
@@ -20,15 +22,20 @@ env:
 
 before_script:
   - set -eo pipefail
-  - go get -u golang.org/x/tools/cmd/goimports
+  - |
+    if test $GOIMPORTS_CHECK -eq 1
+    then
+      go get -u golang.org/x/tools/cmd/goimports
+    fi
 script:
   # We could merge the two commands below for efficiency, but it would give less comprehensive errors
   # Check files syntax and basic formatting
-  - function checkEmpty() {
-      if [ -n "$1" ] ;
+  - |
+    function checkEmpty() {
+      if [ -n "$1" ]
       then
-        echo -e "\nFiles with syntax or formatting errors ($ERR_FILES)\n";
-        return 1;
+        echo -e "\nFiles with syntax or formatting errors ($ERR_FILES)\n"
+        return 1
       fi  
     }
   # If a syntax error occurs, the following command fails
@@ -36,8 +43,12 @@ script:
   # Then check formatting errors
   - checkEmpty "$ERR_FILES"
   # Check advanced files formatting, including imports
-  - ERR_FILES=`find . -name "*.go" -execdir goimports -l '{}' \+`
-  - checkEmpty "$ERR_FILES"
+  - |
+    if test $GOIMPORTS_CHECK -eq 1
+    then
+      ERR_FILES=`find . -name "*.go" -execdir goimports -l '{}' \+`
+      checkEmpty "$ERR_FILES"
+    fi
 
   # Run the test suite
   - go test -v ./...
