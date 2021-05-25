@@ -80,6 +80,7 @@ TestStarname defines a starname used by crud_test.go
 | owner | [string](#string) |  | Owner is the owner of the Starname |
 | domain | [string](#string) |  | Domain references the domain to which account belongs |
 | name | [google.protobuf.StringValue](#google.protobuf.StringValue) |  | Name is the name of the account |
+| resource | [string](#string) |  | Resource |
 
 
 

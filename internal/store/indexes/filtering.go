@@ -105,7 +105,7 @@ func moveForward(iters []sdk.Iterator) (primaryKey []byte, stop bool) {
 	return candidateKey, false
 }
 
-// nextKey gets the key of the iterator and then moves it forward
+// nextKey fetches a key from the iterator and then moves it forward
 func nextKey(it sdk.Iterator) []byte {
 	key := it.Key()
 	it.Next()
