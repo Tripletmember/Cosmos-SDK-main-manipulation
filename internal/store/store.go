@@ -81,10 +81,14 @@ func (s Store) Create(o types.Object) error {
 	return nil
 }
 
+// Read reads the object identified by primaryKey and store it to o
+// o must be an already allocated object
+// Returns ErrNotFound if primaryKey identifies no object in the store
 func (s Store) Read(primaryKey []byte, o types.Object) error {
 	return s.objects.Read(primaryKey, o)
 }
 
+// TODO: asks for primary key in order to correctly update an object
 func (s Store) Update(o types.Object) error {
 	// update indexes
 	err := s.indexes.Delete(o.PrimaryKey())
@@ -117,61 +121,60 @@ func (s Store) Delete(primaryKey []byte) error {
 	return nil
 }
 
-func (s Store) RegisterObject(o types.Object) {
-}
-
 func (s Store) Query(sks []types.SecondaryKey, start, end uint64) (*Cursor, error) {
 	var err error
-	var pks [][]byte
+	var it types.Iterator
 	if len(sks) == 0 {
-		pks, err = s.objects.GetAllKeys(start, end)
+		it, err = s.objects.GetAllKeysWithIterator(start, end)
 	} else {
-		pks, err = s.indexes.Filter(sks, start, end)
+		it, err = s.indexes.FilterWithIterator(sks, start, end)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return newFilter(pks, s), nil
+	return newFilter(it, s), nil
 }
 
-func newFilter(primaryKeys [][]byte, store Store) *Cursor {
+func newFilter(it types.Iterator, store Store) *Cursor {
 	return &Cursor{
-		keys:     primaryKeys,
-		store:    store,
-		maxKeys:  len(primaryKeys),
-		keyIndex: 0,
+		keyIterator: it,
+		store:       store,
 	}
 }
 
 type Cursor struct {
-	maxKeys  int
-	keyIndex int
-	keys     [][]byte
-	store    Store
+	keyIterator types.Iterator
+	store       Store
 }
 
+// Next steps to the NextValue element of this cursor
 func (c *Cursor) Next() {
-	if c.keyIndex < c.maxKeys {
-		c.keyIndex += 1
-	}
+	c.keyIterator.Next()
 }
 
+// Read reads the current element of this cursor and store it to o
+// o must be an already allocated object
 func (c *Cursor) Read(o types.Object) error {
 	return c.store.Read(c.currKey(), o)
 }
 
+// Delete deletes the current element of this cursor
+// Delete, Read or Update should not be called on this cursor before a call to Next and will cause a ErrNotFound error
 func (c *Cursor) Delete() error {
 	return c.store.Delete(c.currKey())
 }
 
+// Update updates the current element of this cursor with the given object
+// Delete, Read or Update should not be called on this cursor before a call to Next and may cause a ErrNotFound error
 func (c *Cursor) Update(o types.Object) error {
 	return c.store.Update(o)
 }
 
+// Valid indicates if there is remaining data for this cursor
 func (c *Cursor) Valid() bool {
-	return c.keyIndex < c.maxKeys
+	return c.keyIterator.Valid()
 }
 
 func (c *Cursor) currKey() []byte {
-	return c.keys[c.keyIndex]
+	return c.keyIterator.Get()
 }

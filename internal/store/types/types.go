@@ -26,3 +26,10 @@ type Descriptor struct {
 	PrimaryKey    []byte
 	SecondaryKeys map[string]SecondaryKey
 }
+
+type Iterator interface {
+	Next()
+	Valid() bool
+	Get() []byte
+	Collect() [][]byte
+}
