@@ -3,6 +3,8 @@ package objects
 import (
 	"fmt"
 
+	types2 "github.com/iov-one/cosmos-sdk-crud/types"
+
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/iterator"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -38,10 +40,10 @@ type Store struct {
 // Create creates the object in the store
 // returns an error if it already exists
 // or if marshalling fails
-func (s Store) Create(o types.Object) error {
+func (s Store) Create(o types2.Object) error {
 	pk := o.PrimaryKey()
 	if s.db.Has(pk) {
-		return fmt.Errorf("%w: primary key %x", types.ErrAlreadyExists, pk)
+		return fmt.Errorf("%w: primary key %x", types2.ErrAlreadyExists, pk)
 	}
 	err := s.set(pk, o)
 	s.objects.count++
@@ -50,13 +52,13 @@ func (s Store) Create(o types.Object) error {
 
 // Store retrieves the object given its primary key
 // fails if it does not exist, or if unmarshalling fails
-// the types.Object must be a pointer
-func (s Store) Read(pk []byte, o types.Object) error {
+// the crud.Object must be a pointer
+func (s Store) Read(pk []byte, o types2.Object) error {
 
 	b := s.db.Get(pk)
 	// if nil we assume it was not found
 	if b == nil {
-		return fmt.Errorf("%w: primary key %x", types.ErrNotFound, pk)
+		return fmt.Errorf("%w: primary key %x", types2.ErrNotFound, pk)
 	}
 	err := s.cdc.UnmarshalBinaryLengthPrefixed(b, o)
 	if err != nil {
@@ -67,12 +69,12 @@ func (s Store) Read(pk []byte, o types.Object) error {
 
 // Update updates the given object, fails if it does not exist
 // or if marshalling fails
-func (s Store) Update(o types.Object) error {
+func (s Store) Update(o types2.Object) error {
 	// TODO: Could an user alter the primary key of an object ? If this is the case,
 	// update semantics are quite strange
 	pk := o.PrimaryKey()
 	if !s.db.Has(pk) {
-		return fmt.Errorf("%w: primary key %x", types.ErrNotFound, pk)
+		return fmt.Errorf("%w: primary key %x", types2.ErrNotFound, pk)
 	}
 	err := s.set(pk, o)
 	if err != nil {
@@ -85,7 +87,7 @@ func (s Store) Update(o types.Object) error {
 // fails if the object does not exist
 func (s Store) Delete(primaryKey []byte) error {
 	if !s.db.Has(primaryKey) {
-		return fmt.Errorf("%w: primary key %x", types.ErrNotFound, primaryKey)
+		return fmt.Errorf("%w: primary key %x", types2.ErrNotFound, primaryKey)
 	}
 	s.db.Delete(primaryKey)
 	s.objects.count--

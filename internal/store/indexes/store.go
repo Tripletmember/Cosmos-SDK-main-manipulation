@@ -3,6 +3,8 @@ package indexes
 import (
 	"fmt"
 
+	types2 "github.com/iov-one/cosmos-sdk-crud/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -63,9 +65,9 @@ func NewStore(cdc codec.Marshaler, db sdk.KVStore) Store {
 	}
 }
 
-// Index creates, given a types.Object, it's index value to primary key
+// Index creates, given a crud.Object, it's index value to primary key
 // pointers, and also the primary keys to indexes list
-func (s Store) Index(o types.Object) error {
+func (s Store) Index(o types2.Object) error {
 	primaryKey := o.PrimaryKey()                   // gets the object's primary key
 	secondaryKeys := o.SecondaryKeys()             // gets the object's secondary keys
 	keysList := make([][]byte, len(secondaryKeys)) // create the slice for computed index keys
@@ -115,7 +117,7 @@ func (s Store) Delete(primaryKey []byte) error {
 // as it will load all primary keys in memory, generally speaking Query is suggested
 // for wide index queries.
 // Does not return an error if no result is found
-func (s Store) QueryAll(sk types.SecondaryKey) (primaryKeys [][]byte, err error) {
+func (s Store) QueryAll(sk types2.SecondaryKey) (primaryKeys [][]byte, err error) {
 	err = s.Query(sk, 0, 0, func(primaryKey []byte) (stop bool) {
 		primaryKeys = append(primaryKeys, primaryKey)
 		return false
@@ -131,14 +133,14 @@ func (s Store) QueryAll(sk types.SecondaryKey) (primaryKeys [][]byte, err error)
 // end as 0 the primary keys found will be passed to the 'do' function, if 'do' returns false, the
 // iteration is stopped.
 // Does not return an error if no result is found
-func (s Store) Query(sk types.SecondaryKey, start, end uint64, do func(primaryKey []byte) (keepGoing bool)) error {
+func (s Store) Query(sk types2.SecondaryKey, start, end uint64, do func(primaryKey []byte) (keepGoing bool)) error {
 	return s.getPrimaryKeysFromIndex(sk, start, end, do)
 }
 
 // getPrimaryKeysFromIndex gets all the primary keys from the given start-end range
 // start is inclusive, end is exclusive, error is returned only in case the provided secondary key is invalid
 // Does not return an error if no result is found
-func (s Store) getPrimaryKeysFromIndex(sk types.SecondaryKey, start uint64, end uint64, do func(primaryKey []byte) (stop bool)) error {
+func (s Store) getPrimaryKeysFromIndex(sk types2.SecondaryKey, start uint64, end uint64, do func(primaryKey []byte) (stop bool)) error {
 	store, _, err := s.kvStore(sk)
 	if err != nil {
 		return err
@@ -148,7 +150,7 @@ func (s Store) getPrimaryKeysFromIndex(sk types.SecondaryKey, start uint64, end 
 
 	rng, err := util.NewRange(start, end)
 	if err != nil {
-		return fmt.Errorf("%w: %s", types.ErrBadArgument, err)
+		return fmt.Errorf("%w: %s", types2.ErrBadArgument, err)
 	}
 	for ; iter.Valid(); iter.Next() {
 		inRange, stopIter := rng.CheckAndMoveForward()
@@ -167,13 +169,13 @@ func (s Store) getPrimaryKeysFromIndex(sk types.SecondaryKey, start uint64, end 
 
 // mapKey maps the given primary key to the secondary key, so when iterating a prefixed store
 // created from a secondary key we will find the provided primary key.
-func (s Store) mapKey(secondaryKey types.SecondaryKey, primaryKey []byte) (computedKey []byte, err error) {
+func (s Store) mapKey(secondaryKey types2.SecondaryKey, primaryKey []byte) (computedKey []byte, err error) {
 	store, computedKey, err := s.kvStore(secondaryKey)
 	if err != nil {
 		return nil, err
 	}
 	if store.Has(primaryKey) {
-		return nil, fmt.Errorf("%w: primary key %x in index %s", types.ErrAlreadyExists, primaryKey, secondaryKey)
+		return nil, fmt.Errorf("%w: primary key %x in index %s", types2.ErrAlreadyExists, primaryKey, secondaryKey)
 	}
 	store.Set(primaryKey, []byte{})
 	return computedKey, nil
@@ -183,7 +185,7 @@ func (s Store) unmapRawKeys(primaryKey []byte, encodedKeys [][]byte) error {
 	for _, encKey := range encodedKeys {
 		store := s.kvStoreRaw(encKey)
 		if !store.Has(primaryKey) {
-			return fmt.Errorf("%w: key %x was not found in index key prefixed store %x", types.ErrNotFound, primaryKey, encKey)
+			return fmt.Errorf("%w: key %x was not found in index key prefixed store %x", types2.ErrNotFound, primaryKey, encKey)
 		}
 		store.Delete(primaryKey)
 	}
@@ -195,7 +197,7 @@ func (s Store) unmapRawKeys(primaryKey []byte, encodedKeys [][]byte) error {
 // domains of keys that have the provided secondary key as prefix
 // the computed (encoded) key is returned for convenience as it's usually
 // used to be saved in index keys list!
-func (s Store) kvStore(sk types.SecondaryKey) (store sdk.KVStore, computedKey []byte, err error) {
+func (s Store) kvStore(sk types2.SecondaryKey) (store sdk.KVStore, computedKey []byte, err error) {
 	// compute key
 	computedKey, err = encodeIndexKey(sk)
 	if err != nil {
@@ -206,7 +208,7 @@ func (s Store) kvStore(sk types.SecondaryKey) (store sdk.KVStore, computedKey []
 	return
 }
 
-// kvStoreRaw returns the prefixed key value store from an encoded types.SecondaryKey
+// kvStoreRaw returns the prefixed key value store from an encoded crud.SecondaryKey
 func (s Store) kvStoreRaw(encodedKey []byte) sdk.KVStore {
 	return prefix.NewStore(s.indexes, encodedKey)
 }
@@ -225,7 +227,7 @@ func (s Store) saveIndexList(primaryKey []byte, encodedKeys [][]byte) error {
 	}
 	// save data to store
 	if s.primaryKeysIndexes.Has(primaryKey) {
-		return fmt.Errorf("%w: key %x already exists in index list store", types.ErrAlreadyExists, primaryKey)
+		return fmt.Errorf("%w: key %x already exists in index list store", types2.ErrAlreadyExists, primaryKey)
 	}
 	s.primaryKeysIndexes.Set(primaryKey, b)
 	return nil
@@ -234,7 +236,7 @@ func (s Store) saveIndexList(primaryKey []byte, encodedKeys [][]byte) error {
 // deleteIndexList deletes the secondary keys list of the given primary key
 func (s Store) deleteIndexList(primaryKey []byte) error {
 	if !s.primaryKeysIndexes.Has(primaryKey) {
-		return fmt.Errorf("%w: key %x in index list store", types.ErrNotFound, primaryKey)
+		return fmt.Errorf("%w: key %x in index list store", types2.ErrNotFound, primaryKey)
 	}
 	s.primaryKeysIndexes.Delete(primaryKey)
 	return nil
@@ -244,12 +246,12 @@ func (s Store) deleteIndexList(primaryKey []byte) error {
 func (s Store) getIndexList(primaryKey []byte) (indexes [][]byte, err error) {
 	b := s.primaryKeysIndexes.Get(primaryKey)
 	if b == nil {
-		return nil, fmt.Errorf("%w: key %x not found in index list store", types.ErrNotFound, primaryKey)
+		return nil, fmt.Errorf("%w: key %x not found in index list store", types2.ErrNotFound, primaryKey)
 	}
 	list := new(types.IndexList)
 	err = s.cdc.UnmarshalBinaryLengthPrefixed(b, list)
 	if err != nil {
-		return nil, fmt.Errorf("%w: unable to unmarshal: %s", types.ErrInternal, err.Error())
+		return nil, fmt.Errorf("%w: unable to unmarshal: %s", types2.ErrInternal, err.Error())
 	}
 	return list.Indexes, nil
 }

@@ -8,7 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	types2 "github.com/iov-one/cosmos-sdk-crud/types"
+
 	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 )
 
@@ -28,7 +29,7 @@ func TestStore(t *testing.T) {
 
 		// test creation with same primary key twice
 		err = store.Index(obj)
-		if !errors.Is(err, types.ErrAlreadyExists) {
+		if !errors.Is(err, types2.ErrAlreadyExists) {
 			t.Fatal("unexpected error", err)
 		}
 	})
@@ -43,7 +44,7 @@ func TestStore(t *testing.T) {
 
 		// test empty query
 		var pks [][]byte
-		pks, err = store.QueryAll(types.SecondaryKey{ID: 1, Value: make([]byte, 0)})
+		pks, err = store.QueryAll(types2.SecondaryKey{ID: 1, Value: make([]byte, 0)})
 		if err != nil {
 			t.Fatal("unexpected error", err)
 		}
@@ -56,7 +57,7 @@ func TestStore(t *testing.T) {
 	t.Run("delete", func(t *testing.T) {
 		// test not found
 		err := store.Delete([]byte("does-not-exist"))
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, types2.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
 		// create arbitrary object
@@ -67,7 +68,7 @@ func TestStore(t *testing.T) {
 		}
 		// delete non existing object
 		err = store.Delete(test.MutateBytes(obj.PrimaryKey()))
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, types2.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
 
@@ -88,7 +89,7 @@ func TestStore(t *testing.T) {
 		}
 		// ensure index list is deleted too
 		err = store.deleteIndexList(obj.PrimaryKey())
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, types2.ErrNotFound) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 	})

@@ -1,9 +1,13 @@
 package types
 
+import (
+	crud "github.com/iov-one/cosmos-sdk-crud/types"
+)
+
 type Store interface {
-	Create(o Object) error
-	Read(primaryKey []byte, o Object) error
-	Update(o Object) error
+	Create(o crud.Object) error
+	Read(primaryKey []byte, o crud.Object) error
+	Update(o crud.Object) error
 	Delete(primaryKey []byte) error
 }
 
@@ -11,19 +15,19 @@ type CantFailStore struct {
 	store Store
 }
 
-func (p CantFailStore) Create(o Object) {
+func (p CantFailStore) Create(o crud.Object) {
 	if err := p.store.Create(o); err != nil {
 		panic(err)
 	}
 }
 
-func (p CantFailStore) Read(primaryKey []byte, o Object) {
+func (p CantFailStore) Read(primaryKey []byte, o crud.Object) {
 	if err := p.store.Read(primaryKey, o); err != nil {
 		panic(err)
 	}
 }
 
-func (p CantFailStore) Update(o Object) {
+func (p CantFailStore) Update(o crud.Object) {
 	if err := p.store.Update(o); err != nil {
 		panic(err)
 	}

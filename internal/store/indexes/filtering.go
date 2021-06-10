@@ -5,12 +5,13 @@ import (
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/iterator"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/iov-one/cosmos-sdk-crud/internal/util"
+	types2 "github.com/iov-one/cosmos-sdk-crud/types"
 )
 
-func (s Store) Filter(secondaryKeys []types.SecondaryKey, start, end uint64) ([][]byte, error) {
+func (s Store) Filter(secondaryKeys []types2.SecondaryKey, start, end uint64) ([][]byte, error) {
 
 	if len(secondaryKeys) == 0 {
-		return nil, types.ErrBadArgument
+		return nil, types2.ErrBadArgument
 	}
 
 	iterator, err := s.FilterWithIterator(secondaryKeys, start, end)
@@ -20,10 +21,10 @@ func (s Store) Filter(secondaryKeys []types.SecondaryKey, start, end uint64) ([]
 	return iterator.Collect(), err
 }
 
-func (s Store) FilterWithIterator(sks []types.SecondaryKey, start, end uint64) (types.Iterator, error) {
+func (s Store) FilterWithIterator(sks []types2.SecondaryKey, start, end uint64) (types.Iterator, error) {
 	rng, err := util.NewRange(start, end)
 	if err != nil {
-		return iterator.NilIterator{}, types.ErrBadArgument
+		return iterator.NilIterator{}, types2.ErrBadArgument
 	}
 
 	indexStores := make([]sdk.Iterator, len(sks))
