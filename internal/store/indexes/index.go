@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math"
 
-	types2 "github.com/iov-one/cosmos-sdk-crud/types"
+	crud "github.com/iov-one/cosmos-sdk-crud"
 )
 
 // maxKeyLength defines the index key maximum length in bytes
@@ -28,10 +28,10 @@ const numBytesKeyLength = 2
 // an empty byte array through encode-decode
 // Error types are of types.ErrBadArgument, and happen when
 // the representation of the length of the index key takes more than 2 bytes (uint16).
-func encodeIndexKey(sk types2.SecondaryKey) ([]byte, error) {
+func encodeIndexKey(sk crud.SecondaryKey) ([]byte, error) {
 	length := len(sk.Value)
 	if length > maxKeyLength {
-		return nil, fmt.Errorf("%w: index keys bigger than %d bytes are not allowed, got: %d", types2.ErrBadArgument, maxKeyLength, length)
+		return nil, fmt.Errorf("%w: index keys bigger than %d bytes are not allowed, got: %d", crud.ErrBadArgument, maxKeyLength, length)
 	}
 	encodedLength := make([]byte, numBytesKeyLength)
 	binary.LittleEndian.PutUint16(encodedLength, uint16(length))
@@ -45,25 +45,25 @@ func encodeIndexKey(sk types2.SecondaryKey) ([]byte, error) {
 // and they should be respectively their reverse functions
 // it means that either state was corrupted or there is no backwards compatibility
 // between the two anymore.
-func decodeIndexKey(key []byte) (sk types2.SecondaryKey, err error) {
+func decodeIndexKey(key []byte) (sk crud.SecondaryKey, err error) {
 	// minimumKeyLength defines the minimum length a key has to have
 	// to be converted into a secondary key
 	const metadataLength = numBytesKeyLength + 1
 	// sanity checks
 	length := len(key)
 	if length < metadataLength {
-		return sk, fmt.Errorf("%w: minimum length not reached, got: %d, want: %d", types2.ErrInternal, len(key), metadataLength)
+		return sk, fmt.Errorf("%w: minimum length not reached, got: %d, want: %d", crud.ErrInternal, len(key), metadataLength)
 	}
 	decodedLength := binary.LittleEndian.Uint16(key[1:3])
 	valueLength := length - metadataLength
 	if int(decodedLength) != valueLength {
-		return sk, fmt.Errorf("%w, mismatch in length, decoded: %d, got: %d", types2.ErrInternal, decodedLength, valueLength)
+		return sk, fmt.Errorf("%w, mismatch in length, decoded: %d, got: %d", crud.ErrInternal, decodedLength, valueLength)
 	}
 	// create secondary key
 	value := make([]byte, length-metadataLength)
 	copy(value, key[metadataLength:])
-	return types2.SecondaryKey{
-		ID:    types2.IndexID(key[0]),
+	return crud.SecondaryKey{
+		ID:    crud.IndexID(key[0]),
 		Value: value,
 	}, nil
 }

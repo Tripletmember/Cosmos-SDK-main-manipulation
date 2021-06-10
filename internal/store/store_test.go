@@ -5,11 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	crud "github.com/iov-one/cosmos-sdk-crud/types"
-	types2 "github.com/iov-one/cosmos-sdk-crud/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 )
 
@@ -49,7 +47,7 @@ func TestStore(t *testing.T) {
 		t.Fatal(err)
 	}
 	// test cursor
-	crs, err := s.DoDirectQuery([]types2.SecondaryKey{
+	crs, err := s.DoDirectQuery([]crud.SecondaryKey{
 		update.FirstSecondaryKey(),
 	}, 0, 0)
 	if err != nil {
@@ -80,7 +78,7 @@ func TestStore(t *testing.T) {
 		t.Fatal(err)
 	}
 	err = crs.Read(expected)
-	if !errors.Is(err, types2.ErrNotFound) {
+	if !errors.Is(err, crud.ErrNotFound) {
 		t.Fatal("unexpected error", err)
 	}
 
@@ -89,7 +87,7 @@ func TestStore(t *testing.T) {
 			t.Fatal("Unexpected error :", err)
 		}
 		err = s.Create(test.NewDeterministicObject())
-		if !errors.Is(err, types2.ErrAlreadyExists) {
+		if !errors.Is(err, crud.ErrAlreadyExists) {
 			t.Fatal("Object should be a duplicate")
 		}
 	})
@@ -99,13 +97,13 @@ func TestStore(t *testing.T) {
 			t.Fatal("Unexpected error :", err)
 		}
 		err = s.Read(test.NewDeterministicObject().PrimaryKey(), obj)
-		if !errors.Is(err, types2.ErrNotFound) {
+		if !errors.Is(err, crud.ErrNotFound) {
 			t.Fatal("Object should not exist anymore")
 		}
 	})
 	t.Run("delete/non existing", func(t *testing.T) {
 		err = s.Delete(test.NewDeterministicObject().PrimaryKey())
-		if !errors.Is(err, types2.ErrNotFound) {
+		if !errors.Is(err, crud.ErrNotFound) {
 			t.Fatal("Deleting an non existing object should result in a not found error")
 		}
 	})
@@ -115,7 +113,7 @@ func TestStore(t *testing.T) {
 		if err = s.Create(obj); err != nil {
 			t.Fatal("Unexpected error :", err)
 		}
-		if err = s.indexes.Index(obj); !errors.Is(err, types2.ErrAlreadyExists) {
+		if err = s.indexes.Index(obj); !errors.Is(err, crud.ErrAlreadyExists) {
 			t.Fatal("The object indexes should have been added to the index store")
 		}
 
@@ -252,9 +250,9 @@ func Test_query(t *testing.T) {
 
 }
 
-func createStoreWithRandomObjects(cdc codec.Marshaler, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []types2.Object) {
+func createStoreWithRandomObjects(cdc codec.Marshaler, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []crud.Object) {
 	store := NewStore(cdc, db, []byte(uniqueID))
-	addToStore := func(obj types2.Object) error {
+	addToStore := func(obj crud.Object) error {
 		return store.Create(obj)
 	}
 	return store, test.CreateRandomObjects(addToStore, t, n)

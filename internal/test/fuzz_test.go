@@ -10,10 +10,8 @@ import (
 	"net/http"
 	"testing"
 
-	types2 "github.com/iov-one/cosmos-sdk-crud/types"
-
+	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/lucasjones/reggen"
-
 	"github.com/tendermint/tendermint/libs/rand"
 )
 
@@ -68,7 +66,7 @@ func NewRandomStarname(config *Config) *TestStarname {
 	return NewTestStarnameWithResource(owner, domain, account, resource)
 }
 
-type testFunc func(*testing.T, types2.Store, []*TestStarname)
+type testFunc func(*testing.T, crud.Store, []*TestStarname)
 
 const nbObjectsInTheStore = 100000
 const nbIterations = 50000
@@ -99,7 +97,7 @@ func TestFuzz(t *testing.T) {
 	for i := 0; i < nbObjectsInTheStore; i++ {
 		objs[i] = NewRandomStarname(config)
 		err := s.Create(objs[i])
-		if errors.Is(err, types2.ErrAlreadyExists) {
+		if errors.Is(err, crud.ErrAlreadyExists) {
 			// This is very unlikely, but the test should not fail in that case
 			// Skip this object but we sant the same number at the end
 			i--
@@ -119,7 +117,7 @@ func TestFuzz(t *testing.T) {
 
 }
 
-func testCursorDelete(t *testing.T, store types2.Store, objects []*TestStarname) {
+func testCursorDelete(t *testing.T, store crud.Store, objects []*TestStarname) {
 	obj := randomObject(objects)
 	cursor, err := store.Query().Where().Index(starnameOwnerIndex).Equals([]byte(obj.Owner)).Do()
 	CheckNoError(t, err)
@@ -139,7 +137,7 @@ func testCursorDelete(t *testing.T, store types2.Store, objects []*TestStarname)
 	err = cursor.Delete()
 	CheckNoError(t, err)
 
-	if err := store.Read(obj.PrimaryKey(), testObj); !errors.Is(err, types2.ErrNotFound) {
+	if err := store.Read(obj.PrimaryKey(), testObj); !errors.Is(err, crud.ErrNotFound) {
 		t.Fatalf("Cursor deleted failed")
 	}
 
@@ -149,7 +147,7 @@ func testCursorDelete(t *testing.T, store types2.Store, objects []*TestStarname)
 
 }
 
-func testCursorUpdate(t *testing.T, store types2.Store, objects []*TestStarname) {
+func testCursorUpdate(t *testing.T, store crud.Store, objects []*TestStarname) {
 	obj := randomObject(objects)
 	cursor, err := store.Query().Where().Index(starnameOwnerIndex).Equals([]byte(obj.Owner)).Do()
 	CheckNoError(t, err)
@@ -179,13 +177,13 @@ func testCursorUpdate(t *testing.T, store types2.Store, objects []*TestStarname)
 	}
 }
 
-func testDelete(t *testing.T, store types2.Store, objects []*TestStarname) {
+func testDelete(t *testing.T, store crud.Store, objects []*TestStarname) {
 	obj := randomObject(objects)
 	err := store.Delete(obj.PrimaryKey())
 	CheckNoError(t, err)
 
 	testObj := NewTestStarname("", "", "")
-	if err := store.Read(obj.PrimaryKey(), testObj); !errors.Is(err, types2.ErrNotFound) {
+	if err := store.Read(obj.PrimaryKey(), testObj); !errors.Is(err, crud.ErrNotFound) {
 		t.Fatalf("Deleted failed")
 	}
 
@@ -195,7 +193,7 @@ func testDelete(t *testing.T, store types2.Store, objects []*TestStarname) {
 
 }
 
-func testUpdate(t *testing.T, store types2.Store, objects []*TestStarname) {
+func testUpdate(t *testing.T, store crud.Store, objects []*TestStarname) {
 	obj := randomObject(objects)
 	obj.Owner = "S" + obj.Owner[1:]
 	err := store.Update(obj)
@@ -210,7 +208,7 @@ func testUpdate(t *testing.T, store types2.Store, objects []*TestStarname) {
 	}
 }
 
-func testAndQuery(t *testing.T, store types2.Store, objects []*TestStarname) {
+func testAndQuery(t *testing.T, store crud.Store, objects []*TestStarname) {
 	obj := randomObject(objects)
 	cursor, err := store.Query().Where().Index(starnameResourceIndex).Equals([]byte(obj.Resource)).
 		And().Index(starnameOwnerIndex).Equals([]byte(obj.Owner)).Do()
@@ -232,7 +230,7 @@ func testAndQuery(t *testing.T, store types2.Store, objects []*TestStarname) {
 
 }
 
-func testSimpleQuery(t *testing.T, store types2.Store, objects []*TestStarname) {
+func testSimpleQuery(t *testing.T, store crud.Store, objects []*TestStarname) {
 	obj := randomObject(objects)
 	cursor, err := store.Query().Where().Index(starnameDomainIndex).Equals([]byte(obj.Domain)).Do()
 	CheckNoError(t, err)

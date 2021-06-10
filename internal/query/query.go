@@ -3,7 +3,7 @@ package query
 import (
 	"fmt"
 
-	crud "github.com/iov-one/cosmos-sdk-crud/types"
+	crud "github.com/iov-one/cosmos-sdk-crud"
 )
 
 type StoreWithDirectQuery interface {
