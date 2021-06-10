@@ -12,6 +12,7 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -23,8 +24,8 @@ const Key = "test"
 const IndexID_A = 0x0
 const IndexID_B = 0x1
 
-// assert types.Object is implemented by test Object
-var _ = types.Object(NewObject())
+// assert crud.Object is implemented by test Object
+var _ = crud.Object(NewObject())
 
 // NewStore builds a new store
 func NewStore() (sdk.KVStore, codec.Marshaler, error) {
@@ -39,7 +40,7 @@ func NewStore() (sdk.KVStore, codec.Marshaler, error) {
 func New() (sdk.Context, sdk.StoreKey, codec.Marshaler, error) {
 	interfaceRegistry := cdctypes.NewInterfaceRegistry()
 	interfaceRegistry.RegisterInterface("crud.internal.test",
-		(*types.Object)(nil),
+		(*crud.Object)(nil),
 		&Object{},
 	)
 	testCdc := codec.NewProtoCodec(interfaceRegistry)
@@ -118,8 +119,8 @@ func (o Object) PrimaryKey() (primaryKey []byte) {
 	return o.TestPrimaryKey
 }
 
-func (o Object) SecondaryKeys() (secondaryKeys []types.SecondaryKey) {
-	return []types.SecondaryKey{
+func (o Object) SecondaryKeys() (secondaryKeys []crud.SecondaryKey) {
+	return []crud.SecondaryKey{
 		{
 			ID:    IndexID_A,
 			Value: o.TestSecondaryKeyA,
@@ -131,15 +132,15 @@ func (o Object) SecondaryKeys() (secondaryKeys []types.SecondaryKey) {
 	}
 }
 
-func (o Object) FirstSecondaryKey() types.SecondaryKey {
-	return types.SecondaryKey{
+func (o Object) FirstSecondaryKey() crud.SecondaryKey {
+	return crud.SecondaryKey{
 		ID:    IndexID_A,
 		Value: o.TestSecondaryKeyA,
 	}
 }
 
-func (o Object) SecondSecondaryKey() types.SecondaryKey {
-	return types.SecondaryKey{
+func (o Object) SecondSecondaryKey() crud.SecondaryKey {
+	return crud.SecondaryKey{
 		ID:    IndexID_B,
 		Value: o.TestSecondaryKeyB,
 	}
@@ -180,8 +181,8 @@ func MutateBytes(originalBytes []byte) (mutatedBytes []byte) {
 	return
 }
 
-func CreateRandomObjects(add func(types.Object) error, t *testing.T, n int) []types.Object {
-	var objs []types.Object = nil
+func CreateRandomObjects(add func(crud.Object) error, t *testing.T, n int) []crud.Object {
+	var objs []crud.Object = nil
 
 	for i := 0; i < n; i++ {
 		obj := NewRandomObject()

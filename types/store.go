@@ -1,4 +1,4 @@
-package store
+package types
 
 import (
 	"fmt"
@@ -6,6 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	crud "github.com/iov-one/cosmos-sdk-crud"
+	"github.com/iov-one/cosmos-sdk-crud/internal/query"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/indexes"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/metadata"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/objects"
@@ -28,16 +30,6 @@ const IndexesPrefix = 0x1
 // in which we are storing objects metadata
 const MetadataPrefix = 0x2
 
-type OptionFunc func(s *Store)
-
-func VerifyTypes(s *Store) {
-	s.verifyType = true
-}
-
-func DoNotVerifyTypes(s *Store) {
-	s.verifyType = false
-}
-
 type Store struct {
 	cdc codec.Marshaler
 
@@ -48,7 +40,7 @@ type Store struct {
 	metadata metadata.Store
 }
 
-func NewStore(cdc codec.Marshaler, db sdk.KVStore, pfx []byte, options ...OptionFunc) Store {
+func NewStore(cdc codec.Marshaler, db sdk.KVStore, pfx []byte, options ...crud.OptionFunc) Store {
 	prefixedStore := prefix.NewStore(db, pfx)
 	s := Store{
 		cdc:        cdc,
@@ -58,12 +50,12 @@ func NewStore(cdc codec.Marshaler, db sdk.KVStore, pfx []byte, options ...Option
 		metadata:   metadata.NewStore(cdc, prefix.NewStore(prefixedStore, []byte{MetadataPrefix})),
 	}
 	for _, opt := range options {
-		opt(&s)
+		opt(s)
 	}
 	return s
 }
 
-func (s Store) Create(o types.Object) error {
+func (s Store) Create(o crud.Object) error {
 	err := s.objects.Create(o)
 	if err != nil {
 		return err
@@ -84,12 +76,12 @@ func (s Store) Create(o types.Object) error {
 // Read reads the object identified by primaryKey and store it to o
 // o must be an already allocated object
 // Returns ErrNotFound if primaryKey identifies no object in the store
-func (s Store) Read(primaryKey []byte, o types.Object) error {
+func (s Store) Read(primaryKey []byte, o crud.Object) error {
 	return s.objects.Read(primaryKey, o)
 }
 
 // TODO: asks for primary key in order to correctly update an object
-func (s Store) Update(o types.Object) error {
+func (s Store) Update(o crud.Object) error {
 	// update indexes
 	err := s.indexes.Delete(o.PrimaryKey())
 	if err != nil {
@@ -121,7 +113,11 @@ func (s Store) Delete(primaryKey []byte) error {
 	return nil
 }
 
-func (s Store) Query(sks []types.SecondaryKey, start, end uint64) (*Cursor, error) {
+func (s Store) Query() crud.QueryStatement {
+	return query.NewQuery(s)
+}
+
+func (s Store) DoDirectQuery(sks []crud.SecondaryKey, start, end uint64) (crud.Cursor, error) {
 	var err error
 	var it types.Iterator
 	if len(sks) == 0 {
@@ -132,10 +128,10 @@ func (s Store) Query(sks []types.SecondaryKey, start, end uint64) (*Cursor, erro
 	if err != nil {
 		return nil, err
 	}
-	return newFilter(it, s), nil
+	return newFilter(it, &s), nil
 }
 
-func newFilter(it types.Iterator, store Store) *Cursor {
+func newFilter(it types.Iterator, store *Store) *Cursor {
 	return &Cursor{
 		keyIterator: it,
 		store:       store,
@@ -144,7 +140,7 @@ func newFilter(it types.Iterator, store Store) *Cursor {
 
 type Cursor struct {
 	keyIterator types.Iterator
-	store       Store
+	store       *Store
 }
 
 // Next steps to the NextValue element of this cursor
@@ -154,7 +150,7 @@ func (c *Cursor) Next() {
 
 // Read reads the current element of this cursor and store it to o
 // o must be an already allocated object
-func (c *Cursor) Read(o types.Object) error {
+func (c *Cursor) Read(o crud.Object) error {
 	return c.store.Read(c.currKey(), o)
 }
 
@@ -166,7 +162,7 @@ func (c *Cursor) Delete() error {
 
 // Update updates the current element of this cursor with the given object
 // Delete, Read or Update should not be called on this cursor before a call to Next and may cause a ErrNotFound error
-func (c *Cursor) Update(o types.Object) error {
+func (c *Cursor) Update(o crud.Object) error {
 	return c.store.Update(o)
 }
 

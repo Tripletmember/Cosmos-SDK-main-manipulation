@@ -10,13 +10,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/lucasjones/reggen"
-
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
-
-	"github.com/tendermint/tendermint/libs/rand"
-
 	crud "github.com/iov-one/cosmos-sdk-crud"
+	"github.com/lucasjones/reggen"
+	"github.com/tendermint/tendermint/libs/rand"
 )
 
 type Config struct {
@@ -101,7 +97,7 @@ func TestFuzz(t *testing.T) {
 	for i := 0; i < nbObjectsInTheStore; i++ {
 		objs[i] = NewRandomStarname(config)
 		err := s.Create(objs[i])
-		if errors.Is(err, types.ErrAlreadyExists) {
+		if errors.Is(err, crud.ErrAlreadyExists) {
 			// This is very unlikely, but the test should not fail in that case
 			// Skip this object but we sant the same number at the end
 			i--
@@ -141,7 +137,7 @@ func testCursorDelete(t *testing.T, store crud.Store, objects []*TestStarname) {
 	err = cursor.Delete()
 	CheckNoError(t, err)
 
-	if err := store.Read(obj.PrimaryKey(), testObj); !errors.Is(err, types.ErrNotFound) {
+	if err := store.Read(obj.PrimaryKey(), testObj); !errors.Is(err, crud.ErrNotFound) {
 		t.Fatalf("Cursor deleted failed")
 	}
 
@@ -187,7 +183,7 @@ func testDelete(t *testing.T, store crud.Store, objects []*TestStarname) {
 	CheckNoError(t, err)
 
 	testObj := NewTestStarname("", "", "")
-	if err := store.Read(obj.PrimaryKey(), testObj); !errors.Is(err, types.ErrNotFound) {
+	if err := store.Read(obj.PrimaryKey(), testObj); !errors.Is(err, crud.ErrNotFound) {
 		t.Fatalf("Deleted failed")
 	}
 

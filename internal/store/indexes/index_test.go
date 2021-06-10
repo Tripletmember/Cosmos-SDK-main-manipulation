@@ -7,12 +7,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	crud "github.com/iov-one/cosmos-sdk-crud"
 )
 
 func Test_encodeDecodeIndexKey(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		sk := types.SecondaryKey{
+		sk := crud.SecondaryKey{
 			ID:    0x0,
 			Value: []byte("test"),
 		}
@@ -30,18 +30,18 @@ func Test_encodeDecodeIndexKey(t *testing.T) {
 	})
 	t.Run("encode/error max length", func(t *testing.T) {
 		c := make([]byte, math.MaxUint16+1)
-		_, err := encodeIndexKey(types.SecondaryKey{
+		_, err := encodeIndexKey(crud.SecondaryKey{
 			ID:    0x1,
 			Value: c,
 		})
-		if !errors.Is(err, types.ErrBadArgument) {
+		if !errors.Is(err, crud.ErrBadArgument) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 	})
 	t.Run("encode/prefix check", func(t *testing.T) {
 		c, c2 := []byte("myKey"), []byte("myKey2")
 
-		k, err := encodeIndexKey(types.SecondaryKey{
+		k, err := encodeIndexKey(crud.SecondaryKey{
 			ID:    0x1,
 			Value: c,
 		})
@@ -49,7 +49,7 @@ func Test_encodeDecodeIndexKey(t *testing.T) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 
-		k2, err := encodeIndexKey(types.SecondaryKey{
+		k2, err := encodeIndexKey(crud.SecondaryKey{
 			ID:    0x1,
 			Value: c2,
 		})
@@ -63,11 +63,11 @@ func Test_encodeDecodeIndexKey(t *testing.T) {
 	})
 	t.Run("encode/empty key", func(t *testing.T) {
 		var ek1, ek2 []byte
-		var dk1, dk2 types.SecondaryKey
+		var dk1, dk2 crud.SecondaryKey
 		var err error
 
 		// Encode k1, a sk with empty value, into ek1
-		k1 := types.SecondaryKey{
+		k1 := crud.SecondaryKey{
 			ID:    0x1,
 			Value: make([]byte, 0),
 		}
@@ -77,7 +77,7 @@ func Test_encodeDecodeIndexKey(t *testing.T) {
 		}
 
 		// Encode k2, a sk with nil value, into ek2
-		k2 := types.SecondaryKey{
+		k2 := crud.SecondaryKey{
 			ID:    0x1,
 			Value: nil,
 		}
@@ -111,7 +111,7 @@ func Test_encodeDecodeIndexKey(t *testing.T) {
 	t.Run("decode/error minimum length", func(t *testing.T) {
 		c := make([]byte, 2)
 		_, err := decodeIndexKey(c)
-		if !errors.Is(err, types.ErrInternal) {
+		if !errors.Is(err, crud.ErrInternal) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 	})
@@ -123,7 +123,7 @@ func Test_encodeDecodeIndexKey(t *testing.T) {
 			0x1, // byte: key 1
 		}
 		_, err := decodeIndexKey(key)
-		if !errors.Is(err, types.ErrInternal) {
+		if !errors.Is(err, crud.ErrInternal) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 	})
@@ -136,7 +136,7 @@ func Test_encodeDecodeIndexKey(t *testing.T) {
 			0x1, // byte: key 1
 		}
 		_, err := decodeIndexKey(key)
-		if !errors.Is(err, types.ErrInternal) {
+		if !errors.Is(err, crud.ErrInternal) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 	})

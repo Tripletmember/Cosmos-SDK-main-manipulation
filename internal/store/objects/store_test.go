@@ -8,8 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 )
 
@@ -31,7 +30,7 @@ func TestStore(t *testing.T) {
 
 		// test can't create object with same primary key twice
 		err = store.Create(obj)
-		if !errors.Is(err, types.ErrAlreadyExists) {
+		if !errors.Is(err, crud.ErrAlreadyExists) {
 			t.Fatal("unexpected error", err)
 		}
 	})
@@ -48,19 +47,19 @@ func TestStore(t *testing.T) {
 
 		var expected test.Object
 		err = store.Read(test.MutateBytes(obj.PrimaryKey()), expected)
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, crud.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
 
 		// test nil primary key
 		err = store.Read(nil, expected)
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, crud.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
 
 		// test empty primary key
 		err = store.Read(make([]byte, 0), expected)
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, crud.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
 
@@ -72,7 +71,7 @@ func TestStore(t *testing.T) {
 		// test object not found
 		obj := test.NewRandomObject()
 		err := store.Update(obj)
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, crud.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
 		// create object then update
@@ -102,7 +101,7 @@ func TestStore(t *testing.T) {
 	t.Run("delete", func(t *testing.T) {
 		// test not found
 		err := store.Delete([]byte("does-not-exist"))
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, crud.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
 		// create arbitrary object
@@ -113,7 +112,7 @@ func TestStore(t *testing.T) {
 		}
 		// delete non existing object
 		err = store.Delete(test.MutateBytes(obj.PrimaryKey()))
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, crud.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
 
@@ -125,7 +124,7 @@ func TestStore(t *testing.T) {
 		// try to get object
 		var expected = test.NewObject()
 		err = store.Read(obj.PrimaryKey(), expected)
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, crud.ErrNotFound) {
 			t.Fatal("unexpected error", err)
 		}
 	})
@@ -164,7 +163,7 @@ func TestStore(t *testing.T) {
 	})
 }
 
-func checkKeys(t *testing.T, actual [][]byte, objects []types.Object) {
+func checkKeys(t *testing.T, actual [][]byte, objects []crud.Object) {
 	if len(actual) != len(objects) {
 		t.Fatalf("Result set length mismatch : actual = %v, expected = %v", len(actual), len(objects))
 	}
@@ -177,9 +176,9 @@ func checkKeys(t *testing.T, actual [][]byte, objects []types.Object) {
 	}
 }
 
-func createStoreWithRandomObjects(cdc codec.Marshaler, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []types.Object) {
+func createStoreWithRandomObjects(cdc codec.Marshaler, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []crud.Object) {
 	store := NewStore(cdc, prefix.NewStore(db, []byte(uniqueID)))
-	addToStore := func(obj types.Object) error {
+	addToStore := func(obj crud.Object) error {
 		return store.Create(obj)
 	}
 	return store, test.CreateRandomObjects(addToStore, t, n)

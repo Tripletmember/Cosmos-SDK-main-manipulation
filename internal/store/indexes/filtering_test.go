@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 )
 
@@ -40,14 +40,14 @@ func Test_filtering(t *testing.T) {
 	test.CheckNoError(t, err)
 
 	t.Run("empty sk set", func(t *testing.T) {
-		_, err := store.Filter(make([]types.SecondaryKey, 0), 0, 0)
-		if !errors.Is(err, types.ErrBadArgument) {
+		_, err := store.Filter(make([]crud.SecondaryKey, 0), 0, 0)
+		if !errors.Is(err, crud.ErrBadArgument) {
 			t.Fatal("Unexpected error", err, "(expecting bad argument)")
 		}
 	})
 
 	t.Run("single sk set", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a2")},
 		}
 		pks, err := store.Filter(sks, 0, 0)
@@ -55,7 +55,7 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{"pk2", "pk4", "pk90"})
 	})
 	t.Run("single set w/ range limit", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x1, Value: []byte("b3")},
 		}
 		pks, err := store.Filter(sks, 0, 2)
@@ -63,7 +63,7 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{"pk4", "pk5"})
 	})
 	t.Run("single set w/ range offset", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x1, Value: []byte("b3")},
 		}
 		pks, err := store.Filter(sks, 1, 0)
@@ -72,7 +72,7 @@ func Test_filtering(t *testing.T) {
 	})
 
 	t.Run("single set w/ range limit and offset", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x1, Value: []byte("b3")},
 		}
 		pks, err := store.Filter(sks, 1, 3)
@@ -81,7 +81,7 @@ func Test_filtering(t *testing.T) {
 	})
 
 	t.Run("multiple sk set", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a4")},
 			{ID: 0x1, Value: []byte("b3")},
 		}
@@ -90,7 +90,7 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{"pk6"})
 	})
 	t.Run("duplicated sk key", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a2")},
 			{ID: 0x0, Value: []byte("a3")},
 		}
@@ -100,7 +100,7 @@ func Test_filtering(t *testing.T) {
 	})
 
 	t.Run("duplicated sk key/value", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a2")},
 			{ID: 0x0, Value: []byte("a2")},
 		}
@@ -109,7 +109,7 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{"pk2", "pk4", "pk90"})
 	})
 	t.Run("nonexistent sk key", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x4, Value: []byte("a2")},
 		}
 		pks, err := store.Filter(sks, 0, 0)
@@ -117,7 +117,7 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{})
 	})
 	t.Run("nonexistent sk value", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("b2")},
 		}
 		pks, err := store.Filter(sks, 0, 0)
@@ -125,7 +125,7 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{})
 	})
 	t.Run("multiple sk/empty result for 1st", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a11")},
 			{ID: 0x1, Value: []byte("b1")},
 		}
@@ -134,7 +134,7 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{})
 	})
 	t.Run("multiple sk/empty result for 2nd", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x1, Value: []byte("b21")},
 			{ID: 0x0, Value: []byte("a11")},
 		}
@@ -143,7 +143,7 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{})
 	})
 	t.Run("multiple sk/no results", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a1")},
 			{ID: 0x1, Value: []byte("b3")},
 		}
@@ -152,7 +152,7 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{})
 	})
 	t.Run("multiple sk/empty result for last", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a4")},
 			{ID: 0x0, Value: []byte("a4")},
 			{ID: 0x1, Value: []byte("a4")},
@@ -163,7 +163,7 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{})
 	})
 	t.Run("multiple sk/range", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a2")},
 			{ID: 0x1, Value: []byte("b3")},
 		}
@@ -172,7 +172,7 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{"pk90"})
 	})
 	t.Run("multiple sk/empty result range", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a2")},
 			{ID: 0x1, Value: []byte("b3")},
 		}
@@ -181,20 +181,20 @@ func Test_filtering(t *testing.T) {
 		checkExpected(t, pks, []string{})
 	})
 	t.Run("invalid range", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a1")},
 		}
 		_, err := store.Filter(sks, 1, 1)
-		if !errors.Is(err, types.ErrBadArgument) {
+		if !errors.Is(err, crud.ErrBadArgument) {
 			t.Fatal("Unexpected error", err, "(expecting bad argument)")
 		}
 		_, err = store.Filter(sks, 5, 1)
-		if !errors.Is(err, types.ErrBadArgument) {
+		if !errors.Is(err, crud.ErrBadArgument) {
 			t.Fatal("Unexpected error", err, "(expecting bad argument)")
 		}
 	})
 	t.Run("infinite range w/ offset", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x1, Value: []byte("b3")},
 		}
 		pks, err := store.Filter(sks, 1, 0)
@@ -203,7 +203,7 @@ func Test_filtering(t *testing.T) {
 	})
 
 	t.Run("end index too far", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a1")},
 		}
 		pks, err := store.Filter(sks, 0, 25)
@@ -212,7 +212,7 @@ func Test_filtering(t *testing.T) {
 	})
 
 	t.Run("start index too far", func(t *testing.T) {
-		sks := []types.SecondaryKey{
+		sks := []crud.SecondaryKey{
 			{ID: 0x0, Value: []byte("a1")},
 		}
 		pks, err := store.Filter(sks, 22, 25)

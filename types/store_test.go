@@ -1,4 +1,4 @@
-package store
+package types
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
+	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/iov-one/cosmos-sdk-crud/internal/test"
 )
 
@@ -48,7 +48,7 @@ func TestStore(t *testing.T) {
 		t.Fatal(err)
 	}
 	// test cursor
-	crs, err := s.Query([]types.SecondaryKey{
+	crs, err := s.DoDirectQuery([]crud.SecondaryKey{
 		update.FirstSecondaryKey(),
 	}, 0, 0)
 	if err != nil {
@@ -57,7 +57,6 @@ func TestStore(t *testing.T) {
 	// test read
 	err = crs.Read(expected)
 	if err != nil {
-		t.Logf("%s", crs.currKey())
 		t.Fatal(err)
 	}
 	if err := update.Equals(expected); err != nil {
@@ -80,7 +79,7 @@ func TestStore(t *testing.T) {
 		t.Fatal(err)
 	}
 	err = crs.Read(expected)
-	if !errors.Is(err, types.ErrNotFound) {
+	if !errors.Is(err, crud.ErrNotFound) {
 		t.Fatal("unexpected error", err)
 	}
 
@@ -89,7 +88,7 @@ func TestStore(t *testing.T) {
 			t.Fatal("Unexpected error :", err)
 		}
 		err = s.Create(test.NewDeterministicObject())
-		if !errors.Is(err, types.ErrAlreadyExists) {
+		if !errors.Is(err, crud.ErrAlreadyExists) {
 			t.Fatal("Object should be a duplicate")
 		}
 	})
@@ -99,13 +98,13 @@ func TestStore(t *testing.T) {
 			t.Fatal("Unexpected error :", err)
 		}
 		err = s.Read(test.NewDeterministicObject().PrimaryKey(), obj)
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, crud.ErrNotFound) {
 			t.Fatal("Object should not exist anymore")
 		}
 	})
 	t.Run("delete/non existing", func(t *testing.T) {
 		err = s.Delete(test.NewDeterministicObject().PrimaryKey())
-		if !errors.Is(err, types.ErrNotFound) {
+		if !errors.Is(err, crud.ErrNotFound) {
 			t.Fatal("Deleting an non existing object should result in a not found error")
 		}
 	})
@@ -115,7 +114,7 @@ func TestStore(t *testing.T) {
 		if err = s.Create(obj); err != nil {
 			t.Fatal("Unexpected error :", err)
 		}
-		if err = s.indexes.Index(obj); !errors.Is(err, types.ErrAlreadyExists) {
+		if err = s.indexes.Index(obj); !errors.Is(err, crud.ErrAlreadyExists) {
 			t.Fatal("The object indexes should have been added to the index store")
 		}
 
@@ -133,7 +132,7 @@ func TestStore(t *testing.T) {
 		if err = s.Create(obj); err != nil {
 			t.Fatal("Unexpected error :", err)
 		}
-		cursor, err := s.Query(obj.SecondaryKeys(), 0, 0)
+		cursor, err := s.DoDirectQuery(obj.SecondaryKeys(), 0, 0)
 		if err != nil {
 			t.Fatal("Unexpected error :", err)
 		}
@@ -158,7 +157,7 @@ func TestStore(t *testing.T) {
 	t.Run("query all", func(t *testing.T) {
 		s, objs := createStoreWithRandomObjects(cdc, db, t, 50, "queryall")
 
-		results, err := s.Query(nil, 0, 0)
+		results, err := s.DoDirectQuery(nil, 0, 0)
 		if err != nil {
 			t.Fatal("unexpected error", err)
 		}
@@ -181,9 +180,80 @@ func TestStore(t *testing.T) {
 	})
 }
 
-func createStoreWithRandomObjects(cdc codec.Marshaler, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []types.Object) {
+func Test_query(t *testing.T) {
+	// instantiate store and query
+	db, cdc, err := test.NewStore()
+	if err != nil {
+		t.Fatal(err)
+	}
+	crudStore := NewStore(cdc, db, nil)
+	var q = crudStore.Query()
+	// apply changes
+	var sk1TestValue = []byte("test")
+	var sk2TestValue = []byte("test2")
+	q.Where().
+		Index(0x0).
+		Equals(sk1TestValue).
+		And().
+		Index(0x1).
+		Equals(sk2TestValue).
+		WithRange().Start(10).End(20)
+	t.Run("success", func(t *testing.T) {
+		_, err = q.Do()
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("success/empty equality", func(t *testing.T) {
+		q := crudStore.Query()
+		_, err = q.Where().Index(0x0).Equals([]byte("")).Do()
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("success/no secondary keys", func(t *testing.T) {
+		q := crudStore.Query()
+		_, err := q.Do()
+		t.Logf("%s", err)
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+	})
+
+	t.Run("bad argument/already consumed", func(t *testing.T) {
+		_, _ = q.Do() // do it twice in case we run this subtest only!
+		_, err := q.Do()
+		t.Logf("%s", err)
+		if !errors.Is(err, crud.ErrBadArgument) {
+			t.Fatalf("unexpected error: %s", err)
+		}
+	})
+	t.Run("bad argument/multiple indexes with same id", func(t *testing.T) {
+		q := crudStore.Query()
+		q.Where().Index(0x1).Equals([]byte("1")).And().Index(0x1).Equals([]byte{0x1})
+		_, err := q.Do()
+		t.Logf("%s", err)
+		if !errors.Is(err, crud.ErrBadArgument) {
+			t.Fatalf("unexpected error: %s", err)
+		}
+	})
+	t.Run("bad argument/nil equality", func(t *testing.T) {
+		q := crudStore.Query()
+		q.Where().Index(0x1).Equals(nil)
+		_, err := q.Do()
+		t.Logf("%s", err)
+		if !errors.Is(err, crud.ErrBadArgument) {
+			t.Fatalf("unexpected error: %s", err)
+		}
+	})
+
+}
+
+func createStoreWithRandomObjects(cdc codec.Marshaler, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []crud.Object) {
 	store := NewStore(cdc, db, []byte(uniqueID))
-	addToStore := func(obj types.Object) error {
+	addToStore := func(obj crud.Object) error {
 		return store.Create(obj)
 	}
 	return store, test.CreateRandomObjects(addToStore, t, n)

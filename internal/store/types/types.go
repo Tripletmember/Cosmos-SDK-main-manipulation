@@ -1,30 +1,12 @@
 package types
 
 import (
-	"fmt"
-
-	"github.com/cosmos/cosmos-sdk/codec"
+	crud "github.com/iov-one/cosmos-sdk-crud"
 )
-
-type SecondaryKey struct {
-	ID    byte
-	Value []byte
-}
-
-func (s SecondaryKey) String() string {
-	return fmt.Sprintf("(id=%x, value=%x)", s.ID, s.Value)
-}
-
-type Object interface {
-	codec.ProtoMarshaler
-
-	SecondaryKeys() []SecondaryKey
-	PrimaryKey() []byte
-}
 
 type Descriptor struct {
 	PrimaryKey    []byte
-	SecondaryKeys map[string]SecondaryKey
+	SecondaryKeys map[string]crud.SecondaryKey
 }
 
 type Iterator interface {

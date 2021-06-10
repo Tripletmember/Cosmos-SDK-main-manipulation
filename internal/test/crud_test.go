@@ -14,15 +14,15 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pkg/errors"
+	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/libs/rand"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
-	"github.com/tendermint/tendermint/libs/log"
-	"github.com/tendermint/tendermint/libs/rand"
-
 	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
-	"github.com/pkg/errors"
+	crudtypes "github.com/iov-one/cosmos-sdk-crud/types"
 )
 
 const starnameDelimiter string = "*"
@@ -53,7 +53,7 @@ func newStarnameStore() crud.Store {
 	}
 	ctx := sdk.NewContext(ms, tmproto.Header{Time: time.Now()}, true, log.NewNopLogger())
 	db := ctx.KVStore(key)
-	return crud.NewStore(cdc, db, nil)
+	return crudtypes.NewStore(cdc, db, nil)
 }
 
 func NewTestStarnameWithResource(owner, domain, name, resource string) *TestStarname {

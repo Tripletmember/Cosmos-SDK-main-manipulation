@@ -1,29 +1,12 @@
 package crud
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/iov-one/cosmos-sdk-crud/internal/store"
 )
 
-// errors mirroring internal crud's error
-
-// ErrNotFound is returned when an index or an object are not found
-var ErrNotFound = errors.New("crud: not found")
-
-// ErrAlreadyExists is returned when an index or an object already exist
-var ErrAlreadyExists = errors.New("crud: already exists")
-
-// ErrBadArgument is returned when the provided arguments are invalid
-var ErrBadArgument = errors.New("crud: bad argument")
-
-// ErrInternal is returned when the store detects internal error which
-// might be related to possible state corruption
-var ErrInternal = errors.New("crud: internal error")
-
-type OptionFunc func()
+type OptionFunc func(Store)
 
 // IndexID uniquely identifies an index
 // for example an index ID might be
@@ -51,6 +34,37 @@ type Object interface {
 	// SecondaryKeys is an array containing the secondary keys
 	// used to map the object
 	SecondaryKeys() []SecondaryKey
+}
+
+type ValidQuery interface {
+	WithRange() RangeStatement
+	Do() (Cursor, error)
+}
+
+type QueryStatement interface {
+	ValidQuery
+	Where() WhereStatement
+}
+
+type WhereStatement interface {
+	Index(id IndexID) IndexStatement
+}
+
+type IndexStatement interface {
+	Equals(v []byte) FinalizedIndexStatement
+}
+
+type RangeStatement interface {
+	Start(start uint64) RangeEndStatement
+}
+
+type RangeEndStatement interface {
+	End(end uint64) FinalizedIndexStatement
+}
+
+type FinalizedIndexStatement interface {
+	ValidQuery
+	And() WhereStatement
 }
 
 // Store defines the abstract interface of the crud store
@@ -92,9 +106,6 @@ type Cursor interface {
 	Valid() bool
 }
 
-// NewStore instantiates a new store given the codec, a sdk.KVStore, a prefix
-// in which to store the data, and the optional options to customize the store
-// behaviour
-func NewStore(cdc codec.Marshaler, db sdk.KVStore, prefix []byte, opts ...OptionFunc) Store {
-	return storeWrapper{s: store.NewStore(cdc, db, prefix, toInternalOptions(opts)...)}
+func (s SecondaryKey) String() string {
+	return fmt.Sprintf("(id=%x, value=%x)", s.ID, s.Value)
 }
