@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/iterator"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
@@ -13,11 +14,9 @@ import (
 
 // NewStore is Store's constructor
 func NewStore(cdc codec.Marshaler, db sdk.KVStore) Store {
-	ctr := Counter{}
 	return Store{
-		db:      db,
-		cdc:     cdc,
-		objects: &ctr,
+		db:  db,
+		cdc: cdc,
 	}
 }
 
@@ -32,7 +31,7 @@ type Store struct {
 	// This has to be a reference in order to persist between calls
 	// Otherwise, if we want to use a simple uint64,
 	// we must switch to pointer receiver and pointer storage in struct (or use it through an interface)
-	objects *Counter
+	//objects *Counter
 }
 
 // Create creates the object in the store
@@ -44,7 +43,7 @@ func (s Store) Create(o crud.Object) error {
 		return fmt.Errorf("%w: primary key %x", crud.ErrAlreadyExists, pk)
 	}
 	err := s.set(pk, o)
-	s.objects.count++
+	// s.objects.count++
 	return err
 }
 
@@ -88,7 +87,7 @@ func (s Store) Delete(primaryKey []byte) error {
 		return fmt.Errorf("%w: primary key %x", crud.ErrNotFound, primaryKey)
 	}
 	s.db.Delete(primaryKey)
-	s.objects.count--
+	//s.objects.count--
 	return nil
 }
 
@@ -99,9 +98,9 @@ func (s Store) GetAllKeysWithIterator(start uint64, end uint64) (types.Iterator,
 	// Tracking the number of objects on the store is more efficient
 
 	// If the start offset is superior to the number of element, we can skip directly
-	if start >= s.objects.count {
+	/*if start >= s.objects.count {
 		return iterator.NilIterator{}, nil
-	}
+	}*/
 
 	// The start and end arguments of Iterator() are not indexes but byte array boundaries
 	it := s.db.Iterator(nil, nil)
