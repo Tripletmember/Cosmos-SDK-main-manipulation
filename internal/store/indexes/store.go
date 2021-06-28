@@ -98,6 +98,9 @@ func (s Store) Index(o crud.Object) error {
 // is not retrieved anymore.
 func (s Store) Delete(primaryKey []byte) error {
 	secondaryKeys, err := s.getIndexList(primaryKey)
+	if err != nil {
+		return err
+	}
 	err = s.unmapRawKeys(primaryKey, secondaryKeys)
 	if err != nil {
 		// state corruption, as we might have deleted a subset of keys
