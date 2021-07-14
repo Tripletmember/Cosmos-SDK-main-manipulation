@@ -9,6 +9,8 @@ import (
 	crud "github.com/iov-one/cosmos-sdk-crud"
 )
 
+// CheckPrimaryKeyImmutability checks if the primary key of a crud.Object is dependent over an exported field
+// It panics if it is the case, as crud.Object should have immutable primary keys
 func CheckPrimaryKeyImmutability(object crud.Object) {
 
 	pk := append([]byte{}, object.PrimaryKey()...)
@@ -26,8 +28,15 @@ func CheckPrimaryKeyImmutability(object crud.Object) {
 func mutateAllExportedFields(obj *reflect.Value) {
 
 	// This object is not exported, skip it
+	// Check if the field is mutable
 	if !obj.CanSet() {
-		return
+		// If not, try to use a copy, to make mutation work in maps
+		cpy := reflect.Indirect(reflect.New(obj.Type()))
+		*obj = cpy
+		// If even with a copy it is not mutable, then it is not exported
+		if !obj.CanSet() {
+			return
+		}
 	}
 
 	switch obj.Type().Kind() {
@@ -122,7 +131,7 @@ func mutateMap(obj *reflect.Value) {
 
 func mutateSlice(obj *reflect.Value) {
 	for i := 0; i < obj.Len(); i++ {
-		val := obj.Slice(i, i+1)
+		val := obj.Index(i)
 		mutateAllExportedFields(&val)
 	}
 }
