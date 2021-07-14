@@ -26,10 +26,12 @@ type SecondaryKey struct {
 }
 
 // Object defines a structure that can be saved in the crud store
+// It has an immutable primary key and can have multiple indexed attributes, called secondary keys
 type Object interface {
 	codec.ProtoMarshaler
 
 	// PrimaryKey is the unique id that identifies the object
+	// It MUST be immutable in order to have working update functionality
 	PrimaryKey() []byte
 	// SecondaryKeys is an array containing the secondary keys
 	// used to map the object

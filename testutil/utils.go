@@ -16,7 +16,7 @@ func CheckPrimaryKeyImmutability(object crud.Object) {
 	reflectedObj := reflect.ValueOf(object).Elem()
 	mutateAllExportedFields(&reflectedObj)
 
-	pkAfter := reflectedObj.FieldByName("PrimaryKey").Call(nil)[0].Bytes()
+	pkAfter := reflectedObj.MethodByName("PrimaryKey").Call(nil)[0].Bytes()
 
 	if !bytes.Equal(pk, pkAfter) {
 		panic(fmt.Errorf("primary key of type %T implementing crud.Object is not immutable", object))
