@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/iov-one/cosmos-sdk-crud/internal/util"
@@ -25,7 +26,7 @@ const primaryKeysToIndexPrefix = 0x1
 // index values
 type Store struct {
 	// codec serves the purpose of encoding and decoding objects
-	cdc codec.Marshaler // TODO get rid of the codec?
+	cdc codec.Codec // TODO get rid of the codec?
 	// indexes maps secondary keys to their primary keys
 	// index and primary keys are stored using the following pattern
 	// the index key is composed as
@@ -56,7 +57,7 @@ type Store struct {
 // and the other which maps a primary key to its respective index key
 // for a more straight forward delete of indexes which does not require
 // acquiring the objects current state when indexes are updated.
-func NewStore(cdc codec.Marshaler, db sdk.KVStore) Store {
+func NewStore(cdc codec.Codec, db sdk.KVStore) Store {
 	return Store{
 		cdc:                cdc,
 		indexes:            prefix.NewStore(db, []byte{indexesPrefix}),
@@ -223,7 +224,7 @@ func (s Store) saveIndexList(primaryKey []byte, encodedKeys [][]byte) error {
 	// sort keys deterministically
 	util.SortByteSlice(encodedKeys)
 	// marshal index list
-	b, err := s.cdc.MarshalBinaryLengthPrefixed(&types.IndexList{Indexes: encodedKeys})
+	b, err := s.cdc.MarshalLengthPrefixed(&types.IndexList{Indexes: encodedKeys})
 	if err != nil {
 		return err
 	}
@@ -251,7 +252,7 @@ func (s Store) getIndexList(primaryKey []byte) (indexes [][]byte, err error) {
 		return nil, fmt.Errorf("%w: key %x not found in index list store", crud.ErrNotFound, primaryKey)
 	}
 	list := new(types.IndexList)
-	err = s.cdc.UnmarshalBinaryLengthPrefixed(b, list)
+	err = s.cdc.UnmarshalLengthPrefixed(b, list)
 	if err != nil {
 		return nil, fmt.Errorf("%w: unable to unmarshal: %s", crud.ErrInternal, err.Error())
 	}

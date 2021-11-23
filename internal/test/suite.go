@@ -12,11 +12,12 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	crud "github.com/iov-one/cosmos-sdk-crud"
-	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	db "github.com/tendermint/tm-db"
+
+	crud "github.com/iov-one/cosmos-sdk-crud"
+	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
 )
 
 // Key is the name of a test key
@@ -28,7 +29,7 @@ const IndexID_B = 0x1
 var _ = crud.Object(NewObject())
 
 // NewStore builds a new store
-func NewStore() (sdk.KVStore, codec.Marshaler, error) {
+func NewStore() (sdk.KVStore, codec.Codec, error) {
 	ctx, storeKey, cdc, err := New()
 	if err != nil {
 		return nil, nil, err
@@ -37,7 +38,7 @@ func NewStore() (sdk.KVStore, codec.Marshaler, error) {
 }
 
 // New returns the objects necessary to run a test
-func New() (sdk.Context, sdk.StoreKey, codec.Marshaler, error) {
+func New() (sdk.Context, sdk.StoreKey, codec.Codec, error) {
 	interfaceRegistry := cdctypes.NewInterfaceRegistry()
 	interfaceRegistry.RegisterInterface("crud.internal.test",
 		(*crud.Object)(nil),

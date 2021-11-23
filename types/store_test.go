@@ -251,7 +251,7 @@ func Test_query(t *testing.T) {
 
 }
 
-func createStoreWithRandomObjects(cdc codec.Marshaler, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []crud.Object) {
+func createStoreWithRandomObjects(cdc codec.Codec, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []crud.Object) {
 	store := NewStore(cdc, db, []byte(uniqueID))
 	addToStore := func(obj crud.Object) error {
 		return store.Create(obj)

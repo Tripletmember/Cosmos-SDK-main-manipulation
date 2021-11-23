@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/iov-one/cosmos-sdk-crud/internal/query"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/indexes"
@@ -31,7 +32,7 @@ const IndexesPrefix = 0x1
 const MetadataPrefix = 0x2
 
 type Store struct {
-	cdc codec.Marshaler
+	cdc codec.Codec
 
 	verifyType bool
 
@@ -40,7 +41,7 @@ type Store struct {
 	metadata metadata.Store
 }
 
-func NewStore(cdc codec.Marshaler, db sdk.KVStore, pfx []byte, options ...crud.OptionFunc) Store {
+func NewStore(cdc codec.Codec, db sdk.KVStore, pfx []byte, options ...crud.OptionFunc) Store {
 	prefixedStore := prefix.NewStore(db, pfx)
 	s := Store{
 		cdc:        cdc,
@@ -80,7 +81,6 @@ func (s Store) Read(primaryKey []byte, o crud.Object) error {
 	return s.objects.Read(primaryKey, o)
 }
 
-// TODO: asks for primary key in order to correctly update an object
 func (s Store) Update(o crud.Object) error {
 	// update indexes
 	err := s.indexes.Delete(o.PrimaryKey())
@@ -117,6 +117,7 @@ func (s Store) Query() crud.QueryStatement {
 	return query.NewQuery(s)
 }
 
+// DoDirectQuery is used by the query package, the Query method is a more convenient way to query objects
 func (s Store) DoDirectQuery(sks []crud.SecondaryKey, start, end uint64) (crud.Cursor, error) {
 	var err error
 	var it types.Iterator
