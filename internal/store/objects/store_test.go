@@ -176,7 +176,7 @@ func checkKeys(t *testing.T, actual [][]byte, objects []crud.Object) {
 	}
 }
 
-func createStoreWithRandomObjects(cdc codec.Marshaler, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []crud.Object) {
+func createStoreWithRandomObjects(cdc codec.Codec, db sdk.KVStore, t *testing.T, n int, uniqueID string) (Store, []crud.Object) {
 	store := NewStore(cdc, prefix.NewStore(db, []byte(uniqueID)))
 	addToStore := func(obj crud.Object) error {
 		return store.Create(obj)

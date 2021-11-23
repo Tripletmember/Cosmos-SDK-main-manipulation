@@ -6,11 +6,11 @@ import (
 )
 
 type Store struct {
-	cdc codec.Marshaler
+	cdc codec.Codec
 	db  sdk.KVStore
 }
 
-func NewStore(cdc codec.Marshaler, db sdk.KVStore) Store {
+func NewStore(cdc codec.Codec, db sdk.KVStore) Store {
 	return Store{
 		cdc: cdc,
 		db:  db,

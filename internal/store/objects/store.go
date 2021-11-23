@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	crud "github.com/iov-one/cosmos-sdk-crud"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/iterator"
 	"github.com/iov-one/cosmos-sdk-crud/internal/store/types"
@@ -12,7 +13,7 @@ import (
 )
 
 // NewStore is Store's constructor
-func NewStore(cdc codec.Marshaler, db sdk.KVStore) Store {
+func NewStore(cdc codec.Codec, db sdk.KVStore) Store {
 	return Store{
 		db:  db,
 		cdc: cdc,
@@ -22,7 +23,7 @@ func NewStore(cdc codec.Marshaler, db sdk.KVStore) Store {
 // Store builds an object store
 type Store struct {
 	db  sdk.KVStore
-	cdc codec.Marshaler
+	cdc codec.Codec
 }
 
 // Create creates the object in the store
@@ -47,7 +48,7 @@ func (s Store) Read(pk []byte, o crud.Object) error {
 	if b == nil {
 		return fmt.Errorf("%w: primary key %x", crud.ErrNotFound, pk)
 	}
-	err := s.cdc.UnmarshalBinaryLengthPrefixed(b, o)
+	err := s.cdc.UnmarshalLengthPrefixed(b, o)
 	if err != nil {
 		return err
 	}
@@ -127,7 +128,7 @@ func (s Store) GetAllKeys(start, end uint64) ([][]byte, error) {
 // set takes care of doing object marshalling
 // and setting it in the store
 func (s Store) set(key []byte, o codec.ProtoMarshaler) error {
-	b, err := s.cdc.MarshalBinaryLengthPrefixed(o)
+	b, err := s.cdc.MarshalLengthPrefixed(o)
 	if err != nil {
 		return err
 	}
